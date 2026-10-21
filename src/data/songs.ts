@@ -32,12 +32,36 @@ export interface QuizQuestion {
 }
 
 
+
+export interface ExampleSentence {
+  german: string;
+  english: string;
+}
+
 export interface SongAnnotation {
   id: string;
   seconds: number;
   title: string;
   topic: string;
   explanation: string;
+
+  // What should the learner understand?
+  learningObjective: string;
+
+  // Detailed grammatical explanation.
+  grammarExplanation: string;
+
+  // Original example sentences, not song lyrics.
+  examples: ExampleSentence[];
+
+  // Corresponding words in song.vocabulary.
+  relatedVocabulary: string[];
+
+  // A listening activity for this moment.
+  listeningTask: string;
+
+  // Whether we personally verified the timestamp.
+  timestampVerified: boolean;
 }
 
 
@@ -125,24 +149,87 @@ export const songs: Song[] = [
     },
   ],
   
+  
   annotations: [
     {
-      id: "intro",
+      id: "wollen-introduction",
       seconds: 0,
-      title: "Listening introduction",
+      title: "Understanding wollen",
       topic: "Modal verbs",
       explanation:
-        "Listen for different forms of the verb wollen, meaning 'to want'.",
+        "Recognize how wollen expresses a wish or intention.",
+
+      learningObjective:
+        "Understand the present-tense forms of wollen.",
+
+      grammarExplanation:
+        "Wollen means 'to want'. It is a modal verb. "
+        + "With ich, it becomes will. "
+        + "When used with another verb, the second verb "
+        + "normally appears at the end in the infinitive.",
+
+      examples: [
+        {
+          german: "Ich will heute Deutsch üben.",
+          english: "I want to practice German today.",
+        },
+        {
+          german: "Wir wollen nach Berlin fahren.",
+          english: "We want to travel to Berlin.",
+        },
+      ],
+
+      relatedVocabulary: ["wollen"],
+
+      listeningTask:
+        "Listen for the forms of wollen. "
+        + "Can you recognize the speaker's intentions?",
+
+      timestampVerified: false,
     },
     {
-      id: "checkpoint",
+      id: "hearing-understanding",
       seconds: 30,
-      title: "Listening checkpoint",
-      topic: "Listening comprehension",
+      title: "Hören and verstehen",
+      topic: "Present-tense conjugation",
       explanation:
-        "Pause here and identify any German words you recognize.",
+        "Pay attention to the verbs used when addressing other people.",
+
+      learningObjective:
+        "Recognize hört and versteht as forms "
+        + "of hören and verstehen.",
+
+      grammarExplanation:
+        "Hören means 'to hear' and verstehen "
+        + "means 'to understand'. "
+        + "When speaking to a group using ihr, "
+        + "these verbs become hört and versteht.",
+
+      examples: [
+        {
+          german: "Ihr hört die Musik.",
+          english: "You all hear the music.",
+        },
+        {
+          german: "Ihr versteht die Frage.",
+          english: "You all understand the question.",
+        },
+      ],
+
+      relatedVocabulary: [
+        "hören",
+        "verstehen",
+      ],
+
+      listeningTask:
+        "Listen for different forms of hören "
+        + "and verstehen. Try identifying who "
+        + "the singer is addressing.",
+
+      timestampVerified: false,
     },
   ],
+
 
 
   },

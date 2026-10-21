@@ -45,7 +45,7 @@ async function SongContent({
 
   return (
     <main className="min-h-screen bg-[#F7F7F4] px-6 py-10 text-[#171717]">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-7xl">
         <Link
           href="/"
           className="text-sm font-medium text-teal-700 hover:underline"
@@ -73,16 +73,6 @@ async function SongContent({
           videoId={song.youtubeId}
           annotations={song.annotations}
         />
-
-
-        <a
-          href={`https://www.youtube.com/watch?v=${song.youtubeId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-block text-sm text-teal-700 underline"
-        >
-          Watch on YouTube
-        </a>
 
         
       <section className="mt-8 rounded-xl border border-teal-100 bg-teal-50 p-6">
@@ -143,12 +133,17 @@ async function SongContent({
             </p>
 
             <div className="mt-5 space-y-4">
+              
               {song.vocabulary.map((word) => (
-                <VocabularyCard
+                <div
                   key={word.german}
-                  word={word}
-                />
+                  id={`vocab-${word.german}`}
+                  className="scroll-mt-8"
+                >
+                  <VocabularyCard word={word} />
+                </div>
               ))}
+
             </div>
           </section>
 
