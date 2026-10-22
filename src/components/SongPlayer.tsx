@@ -65,6 +65,22 @@ export default function SongPlayer({
   }
 
   
+async function getVideoTime(): Promise<number | null> {
+  const player = playerRef.current;
+
+  if (!player) return null;
+
+  try {
+    const seconds = await player.getCurrentTime();
+
+    return Number.isFinite(seconds) ? seconds : null;
+  } catch {
+    return null;
+  }
+}
+
+
+  
     useEffect(() => {
       if (!ready) return;
 
@@ -172,6 +188,7 @@ export default function SongPlayer({
         currentTime={currentTime}
         ready={ready}
         onSeek={playFrom}
+        getVideoTime={getVideoTime}
       />
 
       {/* Right side: annotations */}
