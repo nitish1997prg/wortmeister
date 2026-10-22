@@ -9,6 +9,11 @@ import {
 } from "react";
 import { parseLrc, type LrcLine } from "@/lib/lrc";
 
+import ClickableLyricLine from "@/components/ClickableLyricLine";
+import WordDetails from "@/components/WordDetails";
+
+import type { WordExplanation } from "@/data/germanVocabulary";
+
 interface EditableLine extends LrcLine {
   id: number;
 }
@@ -51,6 +56,8 @@ export default function LyricsPanel({
   const [globalShift, setGlobalShift] = useState("0");
   const [followPlayback, setFollowPlayback] = useState(true);
   const [message, setMessage] = useState("");
+  const [selectedWord, setSelectedWord] =
+  useState<WordExplanation | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
@@ -142,6 +149,7 @@ export default function LyricsPanel({
       setGlobalShift("0");
       setFollowPlayback(true);
       setMessage("Lyrics imported successfully.");
+      setSelectedWord(null);
     } catch {
       setMessage("Could not read the file.");
     }
@@ -439,58 +447,84 @@ export default function LyricsPanel({
             </button>
           </div>
 
+          
+          {selectedWord && (
+            <div className="mt-4">
+              <WordDetails
+                word={selectedWord}
+                onClose={() => setSelectedWord(null)}
+              />
+            </div>
+          )}
+
+
           <div
             ref={scrollRef}
             className="mt-4 h-[430px] space-y-2 overflow-y-auto rounded-xl bg-gray-50 p-3"
           >
-            {lines.map((line, index) => {
-              const isActive = index === activeIndex;
-              const isSelected = line.id === selectedId;
+            
+          {lines.map((line, index) => {
+            const isActive = index === activeIndex;
+            const isSelected = line.id === selectedId;
 
-              return (
-                <div
-                  key={line.id}
-                  ref={isActive ? activeRef : null}
-                  className="flex items-center gap-2"
+            return (
+              <div
+                key={line.id}
+                ref={isActive ? activeRef : null}
+                className={`flex items-start gap-2 rounded-lg border p-2 ${
+                  isSelected
+                    ? "border-amber-500 bg-amber-50"
+                    : isActive
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-200 bg-white"
+                }`}
+              >
+                {/* Select this line for synchronization editing */}
+                <button
+                  type="button"
+                  aria-pressed={isSelected}
+                  aria-label={`Select lyric at ${formatTime(line.seconds)}`}
+                  onClick={() => {
+                    setSelectedId(line.id);
+                    setFollowPlayback(false);
+                  }}
+                  className="shrink-0 rounded-md px-1 py-2 font-mono text-xs text-gray-500 hover:bg-gray-100"
                 >
-                  <button
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => {
-                      setSelectedId(line.id);
-                      setFollowPlayback(false);
-                    }}
-                    className={`min-w-0 flex-1 rounded-lg border p-3 text-left text-sm ${
-                      isSelected
-                        ? "border-amber-500 bg-amber-50"
-                        : isActive
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <span className="mr-2 font-mono text-xs text-gray-500">
-                      {formatTime(line.seconds)}
-                    </span>
-                    <span className="break-words">
-                      {line.text || "♪ Pause"}
-                    </span>
-                  </button>
+                  {formatTime(line.seconds)}
+                </button>
 
-                  <button
-                    type="button"
-                    disabled={!ready}
-                    onClick={() => {
-                      onSeek(line.seconds);
-                      setFollowPlayback(true);
-                    }}
-                    aria-label={`Play from ${formatTime(line.seconds)}`}
-                    className="rounded-lg border bg-white px-3 py-3 text-sm disabled:opacity-40"
-                  >
-                    ▶
-                  </button>
-                </div>
-              );
-            })}
+                {/* Interactive German words */}
+                <p className="min-w-0 flex-1 whitespace-pre-wrap break-words py-2 text-sm leading-7">
+                  {line.text ? (
+                    <ClickableLyricLine
+                      text={line.text}
+                      onWordSelect={setSelectedWord}
+                    />
+                  ) : (
+                    <span className="italic text-gray-400">
+                      ♪ Pause
+                    </span>
+                  )}
+                </p>
+
+                {/* Seek to the lyric position */}
+                <button
+                  type="button"
+                  disabled={!ready}
+                  onClick={() => {
+                    onSeek(line.seconds);
+                    setFollowPlayback(true);
+                  }}
+                  aria-label={`Play from ${formatTime(line.seconds)}`}
+                  className="shrink-0 rounded-lg border bg-white px-3 py-2 text-sm disabled:opacity-40"
+                >
+                  ▶
+                </button>
+              </div>
+            );
+          })}
+
+            
           </div>
 
           <button
