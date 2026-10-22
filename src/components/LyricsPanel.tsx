@@ -59,6 +59,7 @@ export default function LyricsPanel({
   const [message, setMessage] = useState("");
   const [selectedWord, setSelectedWord] =
   useState<WordExplanation | null>(null);
+  const [mode, setMode] = useState<"listen" | "edit">("listen");
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
@@ -93,30 +94,31 @@ export default function LyricsPanel({
     }
   }
 
-  // Automatically scroll only when follow mode is enabled.
-  useEffect(() => {
-    if (!followPlayback) return;
+  
+    useEffect(() => {
+      if (mode !== "listen" || !followPlayback) return;
 
-    const container = scrollRef.current;
-    const active = activeRef.current;
+      const container = scrollRef.current;
+      const active = activeRef.current;
 
-    if (!container || !active) return;
+      if (!container || !active) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const activeRect = active.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
 
-    const target =
-      container.scrollTop +
-      activeRect.top -
-      containerRect.top -
-      container.clientHeight / 2 +
-      active.clientHeight / 2;
+      const target =
+        container.scrollTop +
+        activeRect.top -
+        containerRect.top -
+        container.clientHeight / 2 +
+        active.clientHeight / 2;
 
-    container.scrollTo({
-      top: Math.max(0, target),
-      behavior: "smooth",
-    });
-  }, [activeIndex, followPlayback]);
+      container.scrollTo({
+        top: Math.max(0, target),
+        behavior: "smooth",
+      });
+    }, [activeIndex, followPlayback, mode]);
+
 
     useEffect(() => {
     return () => requestRef.current?.abort();
@@ -256,6 +258,7 @@ export default function LyricsPanel({
       setSelectedWord(null);
       setLoadingWord(null);
       setAiError(null);
+      setMode("listen");
     } catch {
       setMessage("Could not read the file.");
     }
@@ -405,281 +408,411 @@ export default function LyricsPanel({
     setMessage("Corrected LRC downloaded.");
   }
 
-  return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5">
-      <h2 className="text-xl font-semibold">
-        Lyrics Synchronization Editor
-      </h2>
+  
+    return (
+      <section className="min-w-0 space-y-4">
+        {/* Workspace header */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">
+              German Lyrics
+            </h2>
 
-      <p className="mt-2 text-sm text-gray-600">
-        Select a lyric and match its timestamp to
-        the YouTube playback position.
-      </p>
-
-      <input
-        type="file"
-        accept=".lrc"
-        aria-label="Import LRC file"
-        onChange={importFile}
-        className="mt-4 block w-full text-sm"
-      />
-
-      {message && (
-        <p role="status" className="mt-3 text-sm text-teal-700">
-          {message}
-        </p>
-      )}
-
-      {lines.length > 0 && (
-        <>
-          <div className="mt-5 rounded-lg bg-gray-50 p-4">
-            <p className="text-xs font-medium text-gray-500">
-              CURRENT VIDEO POSITION
-            </p>
-            <p className="mt-1 font-mono text-2xl font-semibold">
-              {formatTime(currentTime)}
+            <p className="mt-1 text-sm text-gray-500">
+              {mode === "listen"
+                ? "Follow the song and click words to learn German."
+                : "Calibrate timestamps against the video."}
             </p>
           </div>
 
-          {selectedLine && (
-            <div className="mt-5 space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div>
-                <p className="text-xs font-semibold uppercase text-amber-800">
-                  Selected lyric
-                </p>
-
-                <p className="mt-2 font-medium">
-                  {selectedLine.text || "♪ Pause"}
-                </p>
-
-                <p className="mt-2 font-mono text-sm">
-                  {formatTime(selectedLine.seconds)}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    changeSelectedTime(selectedLine.seconds - 0.1)
-                  }
-                  className="flex-1 rounded-lg border bg-white p-2 text-sm"
-                >
-                  − 0.1s
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    changeSelectedTime(selectedLine.seconds + 0.1)
-                  }
-                  className="flex-1 rounded-lg border bg-white p-2 text-sm"
-                >
-                  + 0.1s
-                </button>
-              </div>
-
-              <button
-                type="button"
-                disabled={!ready}
-                onClick={() => void syncToVideo(false)}
-                className="w-full rounded-lg bg-teal-700 p-3 text-sm text-white disabled:opacity-50"
-              >
-                Set selected line to video time
-              </button>
-
-              <button
-                type="button"
-                disabled={!ready}
-                onClick={() => void syncToVideo(true)}
-                className="w-full rounded-lg border border-teal-700 bg-white p-3 text-sm text-teal-700 disabled:opacity-50"
-              >
-                Shift selected line and later lyrics
-              </button>
-            </div>
-          )}
-
-          <div className="mt-5 rounded-lg border p-4">
-            <h3 className="font-semibold">
-              Shift entire song
-            </h3>
-
-            <p className="mt-1 text-xs text-gray-500">
-              Positive seconds delay lyrics.
-              Negative seconds move lyrics earlier.
-            </p>
-
-            <div className="mt-3 flex gap-2">
-              <input
-                type="number"
-                step="0.1"
-                value={globalShift}
-                onChange={(event) =>
-                  setGlobalShift(event.target.value)
-                }
-                aria-label="Global shift in seconds"
-                className="min-w-0 flex-1 rounded-lg border p-2"
-              />
-
-              <button
-                type="button"
-                onClick={applyGlobalShift}
-                className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={followPlayback}
-                onChange={(event) =>
-                  setFollowPlayback(event.target.checked)
-                }
-              />
-              Follow playback
-            </label>
+          {/* Mode selector */}
+          <div
+            role="group"
+            aria-label="Lyrics mode"
+            className="flex rounded-lg bg-gray-100 p-1"
+          >
+            <button
+              type="button"
+              aria-pressed={mode === "listen"}
+              onClick={() => {
+                setMode("listen");
+                setFollowPlayback(true);
+              }}
+              className={`rounded-md px-3 py-2 text-sm font-medium ${
+                mode === "listen"
+                  ? "bg-white text-teal-800 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Listen & Learn
+            </button>
 
             <button
               type="button"
-              disabled={history.length === 0}
-              onClick={undo}
-              className="text-sm text-teal-700 disabled:opacity-40"
+              aria-pressed={mode === "edit"}
+              onClick={() => setMode("edit")}
+              className={`rounded-md px-3 py-2 text-sm font-medium ${
+                mode === "edit"
+                  ? "bg-white text-teal-800 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
             >
-              Undo last change
+              Edit Timing
             </button>
           </div>
+        </div>
 
-          
-          
-        {(selectedWord || loadingWord || aiError) && (
-          <div className="mt-4 space-y-3">
-            {loadingWord && (
-              <p role="status" className="text-sm text-teal-700">
-                Generating AI explanation for "{loadingWord}"...
-              </p>
-            )}
-
-            {aiError && (
-              <p role="alert" className="text-sm text-amber-700">
-                {aiError}
-              </p>
-            )}
-
-            {selectedWord && (
-              <WordDetails
-                word={selectedWord}
-                onClose={() => {
-                  requestRef.current?.abort();
-                  setSelectedWord(null);
-                  setLoadingWord(null);
-                  setAiError(null);
-                }}
-              />
-            )}
-
-            {!selectedWord && aiError && (
-              <button
-                type="button"
-                onClick={() => setAiError(null)}
-                className="text-sm text-teal-700 underline"
-              >
-                Dismiss
-              </button>
-            )}
-          </div>
+        {message && (
+          <p role="status" className="text-sm text-teal-700">
+            {message}
+          </p>
         )}
 
+        {/* First-time import */}
+        {lines.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6">
+            <h3 className="font-semibold">
+              Import synchronized lyrics
+            </h3>
 
+            <p className="mt-2 text-sm text-gray-600">
+              Select your corrected LRC file to start
+              following the lyrics.
+            </p>
 
-          <div
-            ref={scrollRef}
-            className="mt-4 h-[430px] space-y-2 overflow-y-auto rounded-xl bg-gray-50 p-3"
-          >
-            
-          {lines.map((line, index) => {
-            const isActive = index === activeIndex;
-            const isSelected = line.id === selectedId;
+            <input
+              type="file"
+              accept=".lrc"
+              aria-label="Import LRC file"
+              onChange={importFile}
+              className="mt-4 block w-full text-sm"
+            />
+          </div>
+        ) : mode === "listen" ? (
+          /* ======================================
+            LISTEN & LEARN MODE
+            ====================================== */
+          <div className="space-y-4">
+            {/* AI vocabulary explanation */}
+            {(selectedWord || loadingWord || aiError) && (
+              <div className="space-y-3">
+                      {loadingWord && (
+                        
+                      <p role="status" className="text-sm text-teal-700">
+                        Generating AI explanation for &quot;{loadingWord}&quot;...
+                      </p>
 
-            return (
-              <div
-                key={line.id}
-                ref={isActive ? activeRef : null}
-                className={`flex items-start gap-2 rounded-lg border p-2 ${
-                  isSelected
-                    ? "border-amber-500 bg-amber-50"
-                    : isActive
-                      ? "border-teal-500 bg-teal-50"
-                      : "border-gray-200 bg-white"
-                }`}
-              >
-                {/* Select this line for synchronization editing */}
-                <button
-                  type="button"
-                  aria-pressed={isSelected}
-                  aria-label={`Select lyric at ${formatTime(line.seconds)}`}
-                  onClick={() => {
-                    setSelectedId(line.id);
-                    setFollowPlayback(false);
-                  }}
-                  className="shrink-0 rounded-md px-1 py-2 font-mono text-xs text-gray-500 hover:bg-gray-100"
-                >
-                  {formatTime(line.seconds)}
-                </button>
+                      )}
 
-                {/* Interactive German words */}
-                <p className="min-w-0 flex-1 whitespace-pre-wrap break-words py-2 text-sm leading-7">
-                  {line.text ? (
-                    <ClickableLyricLine
-                      text={line.text}
-                      onWordSelect={(word) => {
-                        void explainWord(word, line.text);
-                      }}
-                    />
-                  ) : (
-                    <span className="italic text-gray-400">
-                      ♪ Pause
-                    </span>
-                  )}
+                {aiError && (
+                  <p role="alert" className="text-sm text-amber-700">
+                    {aiError}
+                  </p>
+                )}
+
+                {selectedWord && (
+                  <WordDetails
+                    word={selectedWord}
+                    onClose={() => {
+                      requestRef.current?.abort();
+                      setSelectedWord(null);
+                      setLoadingWord(null);
+                      setAiError(null);
+                    }}
+                  />
+                )}
+
+                {!selectedWord && aiError && (
+                  <button
+                    type="button"
+                    onClick={() => setAiError(null)}
+                    className="text-sm text-teal-700 underline"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Lyrics viewer */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {filename}
                 </p>
 
-                {/* Seek to the lyric position */}
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={followPlayback}
+                    onChange={(event) =>
+                      setFollowPlayback(event.target.checked)
+                    }
+                  />
+                  Follow playback
+                </label>
+              </div>
+
+              <div
+                ref={scrollRef}
+                className="h-[520px] space-y-2 overflow-y-auto rounded-lg bg-gray-50 p-3"
+              >
+                {lines.map((line, index) => {
+                  const isActive = index === activeIndex;
+
+                  return (
+                    <div
+                      key={line.id}
+                      ref={isActive ? activeRef : null}
+                      className={`flex items-start gap-3 rounded-lg px-3 py-4 transition-colors ${
+                        isActive
+                          ? "bg-teal-100 text-gray-900"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {/* Seek without showing editing controls */}
+                      <button
+                        type="button"
+                        disabled={!ready}
+                        aria-label={`Play from ${formatTime(line.seconds)}`}
+                        onClick={() => onSeek(line.seconds)}
+                        className="mt-1 shrink-0 rounded-md px-2 py-1 text-xs text-teal-700 hover:bg-teal-200 disabled:opacity-40"
+                      >
+                        ▶
+                      </button>
+
+                      <p
+                        className={`min-w-0 flex-1 whitespace-pre-wrap break-words leading-8 ${
+                          isActive
+                            ? "text-lg font-medium"
+                            : "text-base"
+                        }`}
+                      >
+                        {line.text ? (
+                          <ClickableLyricLine
+                            text={line.text}
+                            onWordSelect={(word) => {
+                              void explainWord(word, line.text);
+                            }}
+                          />
+                        ) : (
+                          <span className="text-sm italic text-gray-400">
+                            ♪ Instrumental
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">
+                Click an underlined word for its meaning
+                and grammar explanation.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* ======================================
+            EDIT TIMING MODE
+            ====================================== */
+          <div className="space-y-4">
+            {/* Import / replace source file */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <h3 className="font-semibold">
+                LRC file
+              </h3>
+
+              <p className="mt-1 break-all text-sm text-gray-600">
+                Currently loaded: {filename}
+              </p>
+
+              <input
+                type="file"
+                accept=".lrc"
+                aria-label="Replace LRC file"
+                onChange={importFile}
+                className="mt-3 block w-full text-sm"
+              />
+            </div>
+
+            {/* Video position */}
+            <div className="rounded-xl bg-gray-100 p-4">
+              <p className="text-xs font-medium text-gray-500">
+                CURRENT VIDEO POSITION
+              </p>
+
+              <p className="mt-1 font-mono text-2xl font-semibold">
+                {formatTime(currentTime)}
+              </p>
+            </div>
+
+            {/* Selected lyric editing controls */}
+            {selectedLine && (
+              <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-amber-800">
+                    Selected lyric
+                  </p>
+
+                  <p className="mt-2 font-medium">
+                    {selectedLine.text || "♪ Pause"}
+                  </p>
+
+                  <p className="mt-2 font-mono text-sm">
+                    {formatTime(selectedLine.seconds)}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      changeSelectedTime(
+                        selectedLine.seconds - 0.1
+                      )
+                    }
+                    className="flex-1 rounded-lg border bg-white p-2 text-sm"
+                  >
+                    − 0.1s
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      changeSelectedTime(
+                        selectedLine.seconds + 0.1
+                      )
+                    }
+                    className="flex-1 rounded-lg border bg-white p-2 text-sm"
+                  >
+                    + 0.1s
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   disabled={!ready}
-                  onClick={() => {
-                    onSeek(line.seconds);
-                    setFollowPlayback(true);
-                  }}
-                  aria-label={`Play from ${formatTime(line.seconds)}`}
-                  className="shrink-0 rounded-lg border bg-white px-3 py-2 text-sm disabled:opacity-40"
+                  onClick={() => void syncToVideo(false)}
+                  className="w-full rounded-lg bg-teal-700 p-3 text-sm text-white disabled:opacity-50"
                 >
-                  ▶
+                  Set selected line to video time
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!ready}
+                  onClick={() => void syncToVideo(true)}
+                  className="w-full rounded-lg border border-teal-700 bg-white p-3 text-sm text-teal-700 disabled:opacity-50"
+                >
+                  Shift selected line and later lyrics
                 </button>
               </div>
-            );
-          })}
+            )}
 
-            
+            {/* Global shift */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <h3 className="font-semibold">
+                Shift entire song
+              </h3>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Positive seconds delay lyrics.
+                Negative seconds move them earlier.
+              </p>
+
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={globalShift}
+                  onChange={(event) =>
+                    setGlobalShift(event.target.value)
+                  }
+                  aria-label="Global shift in seconds"
+                  className="min-w-0 flex-1 rounded-lg border p-2"
+                />
+
+                <button
+                  type="button"
+                  onClick={applyGlobalShift}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            {/* Editing actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                disabled={history.length === 0}
+                onClick={undo}
+                className="text-sm text-teal-700 disabled:opacity-40"
+              >
+                Undo last change
+              </button>
+
+              <button
+                type="button"
+                onClick={exportLrc}
+                className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white"
+              >
+                Export corrected LRC
+              </button>
+            </div>
+
+            {/* Editor timeline: text is not clickable vocabulary */}
+            <div className="h-[430px] space-y-2 overflow-y-auto rounded-xl bg-gray-50 p-3">
+              {lines.map((line) => {
+                const isSelected = line.id === selectedId;
+
+                return (
+                  <div
+                    key={line.id}
+                    className="flex items-center gap-2"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => setSelectedId(line.id)}
+                      className={`min-w-0 flex-1 rounded-lg border p-3 text-left text-sm ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-50"
+                          : "border-gray-200 bg-white"
+                      }`}
+                    >
+                      <span className="mr-2 font-mono text-xs text-gray-500">
+                        {formatTime(line.seconds)}
+                      </span>
+
+                      <span className="break-words">
+                        {line.text || "♪ Pause"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!ready}
+                      onClick={() => onSeek(line.seconds)}
+                      aria-label={`Play from ${formatTime(line.seconds)}`}
+                      className="rounded-lg border bg-white px-3 py-3 text-sm disabled:opacity-40"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Editing changes remain local until you
+              export the corrected LRC file.
+            </p>
           </div>
+        )}
+      </section>
+    );
 
-          <button
-            type="button"
-            onClick={exportLrc}
-            className="mt-5 w-full rounded-lg bg-teal-700 p-3 font-medium text-white hover:bg-teal-800"
-          >
-            Export corrected LRC
-          </button>
-
-          <p className="mt-3 text-xs text-gray-500">
-            Edits are temporary until exported.
-            Keep a backup of your original LRC.
-          </p>
-        </>
-      )}
-    </section>
-  );
 }
