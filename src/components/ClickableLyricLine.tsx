@@ -1,32 +1,27 @@
 
 "use client";
 
-import {
-  lookupGermanWord,
-  type WordExplanation,
-} from "@/data/germanVocabulary";
-
 interface ClickableLyricLineProps {
   text: string;
-  onWordSelect: (word: WordExplanation) => void;
+  onWordSelect: (word: string) => void;
 }
 
 export default function ClickableLyricLine({
   text,
   onWordSelect,
 }: ClickableLyricLineProps) {
-  // Preserve words, spaces, punctuation and contractions.
   const tokens =
     text.match(
       /\p{L}+(?:['’]\p{L}+)*|\s+|[^\p{L}\s]+/gu
     ) ?? [];
 
+  const isWord =
+    /^\p{L}+(?:['’]\p{L}+)*$/u;
+
   return (
     <>
       {tokens.map((token, index) => {
-        const explanation = lookupGermanWord(token);
-
-        if (!explanation) {
+        if (!isWord.test(token)) {
           return <span key={index}>{token}</span>;
         }
 
@@ -34,9 +29,9 @@ export default function ClickableLyricLine({
           <button
             key={index}
             type="button"
-            onClick={() => onWordSelect(explanation)}
+            onClick={() => onWordSelect(token)}
             title={`Explain ${token}`}
-            className="rounded px-0.5 font-medium text-teal-700 underline decoration-teal-400 decoration-dotted underline-offset-4 hover:bg-teal-100 focus-visible:outline-2 focus-visible:outline-teal-700"
+            className="rounded px-0.5 font-medium text-teal-700 underline decoration-teal-400 decoration-dotted underline-offset-4 hover:bg-teal-100"
           >
             {token}
           </button>

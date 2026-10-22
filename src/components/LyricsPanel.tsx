@@ -13,6 +13,7 @@ import ClickableLyricLine from "@/components/ClickableLyricLine";
 import WordDetails from "@/components/WordDetails";
 
 import type { WordExplanation } from "@/data/germanVocabulary";
+import { lookupGermanWord } from "@/data/germanVocabulary";
 
 interface EditableLine extends LrcLine {
   id: number;
@@ -62,6 +63,18 @@ export default function LyricsPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
 
+  const [loadingWord, setLoadingWord] =
+  useState<string | null>(null);
+
+  const [aiError, setAiError] =
+    useState<string | null>(null);
+
+  const requestRef = useRef<AbortController | null>(null);
+
+  const explanationCache = useRef(
+    new Map<string, WordExplanation>()
+  );
+
   const selectedIndex = lines.findIndex(
     (line) => line.id === selectedId
   );
@@ -104,6 +117,94 @@ export default function LyricsPanel({
       behavior: "smooth",
     });
   }, [activeIndex, followPlayback]);
+
+    useEffect(() => {
+    return () => requestRef.current?.abort();
+  }, []);
+
+
+  
+  async function explainWord(
+    word: string,
+    context: string
+  ) {
+    // Cancel the previous browser request.
+    requestRef.current?.abort();
+
+    setAiError(null);
+
+    // Display the existing glossary entry immediately
+    // if we have one.
+    setSelectedWord(lookupGermanWord(word) ?? null);
+
+    const cacheKey = JSON.stringify([
+      word.toLocaleLowerCase("de-DE"),
+      context,
+    ]);
+
+    const cached = explanationCache.current.get(cacheKey);
+
+    if (cached) {
+      setSelectedWord(cached);
+      setLoadingWord(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    requestRef.current = controller;
+
+    setLoadingWord(word);
+
+    try {
+      const response = await fetch(
+        "/api/vocabulary/explain",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            word,
+            context,
+            level: "A2",
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      const data: {
+        explanation?: WordExplanation;
+        error?: string;
+      } = await response.json();
+
+      if (!response.ok || !data.explanation) {
+        throw new Error(
+          data.error ?? "AI explanation failed."
+        );
+      }
+
+      if (controller.signal.aborted) return;
+
+      explanationCache.current.set(
+        cacheKey,
+        data.explanation
+      );
+
+      setSelectedWord(data.explanation);
+    } catch {
+      if (!controller.signal.aborted) {
+        setAiError(
+          "AI explanation unavailable. " +
+          "Showing local vocabulary if available."
+        );
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoadingWord(null);
+      }
+    }
+  }
+
 
   async function importFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -150,6 +251,11 @@ export default function LyricsPanel({
       setFollowPlayback(true);
       setMessage("Lyrics imported successfully.");
       setSelectedWord(null);
+      requestRef.current?.abort();
+      explanationCache.current.clear();
+      setSelectedWord(null);
+      setLoadingWord(null);
+      setAiError(null);
     } catch {
       setMessage("Could not read the file.");
     }
@@ -448,14 +554,45 @@ export default function LyricsPanel({
           </div>
 
           
-          {selectedWord && (
-            <div className="mt-4">
+          
+        {(selectedWord || loadingWord || aiError) && (
+          <div className="mt-4 space-y-3">
+            {loadingWord && (
+              <p role="status" className="text-sm text-teal-700">
+                Generating AI explanation for "{loadingWord}"...
+              </p>
+            )}
+
+            {aiError && (
+              <p role="alert" className="text-sm text-amber-700">
+                {aiError}
+              </p>
+            )}
+
+            {selectedWord && (
               <WordDetails
                 word={selectedWord}
-                onClose={() => setSelectedWord(null)}
+                onClose={() => {
+                  requestRef.current?.abort();
+                  setSelectedWord(null);
+                  setLoadingWord(null);
+                  setAiError(null);
+                }}
               />
-            </div>
-          )}
+            )}
+
+            {!selectedWord && aiError && (
+              <button
+                type="button"
+                onClick={() => setAiError(null)}
+                className="text-sm text-teal-700 underline"
+              >
+                Dismiss
+              </button>
+            )}
+          </div>
+        )}
+
 
 
           <div
@@ -498,7 +635,9 @@ export default function LyricsPanel({
                   {line.text ? (
                     <ClickableLyricLine
                       text={line.text}
-                      onWordSelect={setSelectedWord}
+                      onWordSelect={(word) => {
+                        void explainWord(word, line.text);
+                      }}
                     />
                   ) : (
                     <span className="italic text-gray-400">
