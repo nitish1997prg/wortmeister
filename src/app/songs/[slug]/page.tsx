@@ -1,171 +1,218 @@
 
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { songs } from "@/data/songs";
+
+import prisma from "@/lib/prisma";
+
+// Temporary learning content.
+// Song metadata now comes from PostgreSQL.
+import { songs as localLearningContent } from "@/data/songs";
+
+import SongPlayer from "@/components/SongPlayer";
 import VocabularyCard from "@/components/VocabularyCard";
 import SongQuiz from "@/components/SongQuiz";
-import SongPlayer from "@/components/SongPlayer";
 
-// NEW: Tell Next.js which song pages to prerender.
-export function generateStaticParams() {
-  return songs.map((song) => ({
-    slug: song.slug,
-  }));
-}
-
-interface SongPageProps {
+type PageProps = {
   params: Promise<{ slug: string }>;
-}
+};
 
-// Parent component: Does not await params.
-export default function SongPage({
-  params,
-}: SongPageProps) {
+export default function SongPage({ params }: PageProps) {
   return (
-    <Suspense fallback={<p>Loading song...</p>}>
+    <Suspense fallback={<SongLoading />}>
       <SongContent params={params} />
     </Suspense>
   );
 }
 
-// Child component: Reads params inside Suspense.
-async function SongContent({
-  params,
-}: SongPageProps) {
+function SongLoading() {
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-10">
+      <p role="status" className="text-gray-500">
+        Loading song...
+      </p>
+    </main>
+  );
+}
+
+async function SongContent({ params }: PageProps) {
   const { slug } = await params;
 
-  const song = songs.find(
-    (item) => item.slug === slug
-  );
+  // Source of truth: PostgreSQL
+  const song = await prisma.song.findUnique({
+    where: {
+      slug,
+    },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      youtubeId: true,
+      practiceLevel: true,
+      difficultyNote: true,
+      artist: {
+        select: {
+          name: true,
+        },
+      },
+      lyrics: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
 
   if (!song) {
     notFound();
   }
 
-  return (
-    <main className="min-h-screen bg-[#F7F7F4] px-6 py-10 text-[#171717]">
-      <div className="mx-auto max-w-7xl">
-        <Link
-          href="/"
-          className="text-sm font-medium text-teal-700 hover:underline"
-        >
-          ← All songs
-        </Link>
-
-        <header className="my-8">
-          <h1 className="text-4xl font-bold">
-            {song.title}
-          </h1>
-          <p className="mt-2 text-lg text-gray-600">
-            {song.artist}
-          </p>
-          <p className="mt-3 text-sm text-gray-500">
-            Recommended practice: {song.practiceLevel}
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            {song.difficultyNote}
-          </p>
-        </header>
-
-        
-        <SongPlayer
-          songSlug={song.slug}
-          videoId={song.youtubeId}
-          annotations={song.annotations}
-        />
-
-        
-      <section className="mt-8 rounded-xl border border-teal-100 bg-teal-50 p-6">
-        <h2 className="text-xl font-semibold text-teal-900">
-          Your listening challenge
-        </h2>
-
-        <p className="mt-2 text-sm text-gray-600">
-          Play the song and see whether you can recognize
-          these words and grammatical structures.
-        </p>
-
-        <ol className="mt-5 space-y-3">
-          {song.listeningPrompts.map((prompt, index) => (
-            <li
-              key={index}
-              className="flex items-start gap-3"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white">
-                {index + 1}
-              </span>
-
-              <span className="pt-1 text-sm text-gray-800">
-                {prompt}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Grammar topics
-          </h2>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {song.grammarTopics.map((topic) => (
-              <span
-                key={topic}
-                className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-800"
-              >
-                {topic}
-              </span>
-            ))}
-          </div>
-        </section>
-
-          <div className="mt-5 space-y-4">
-            
-          <section className="mt-10">
-            <h2 className="text-2xl font-semibold">
-              Learn vocabulary
-            </h2>
-
-            <p className="mt-2 text-gray-600">
-              Try to remember the meaning before revealing it.
-            </p>
-
-            <div className="mt-5 space-y-4">
-              
-              {song.vocabulary.map((word) => (
-                <div
-                  key={word.german}
-                  id={`vocab-${word.german}`}
-                  className="scroll-mt-8"
-                >
-                  <VocabularyCard word={word} />
-                </div>
-              ))}
-
-            </div>
-          </section>
-
-          </div>
-        
-        
-      <section className="mt-12">
-        <h2 className="text-2xl font-semibold">
-          Test your knowledge
-        </h2>
-
-        <p className="mb-6 mt-2 text-gray-600">
-          Answer a few questions based on what you&apos;ve learned.
-        </p>
-
-        <SongQuiz questions={song.quiz} />
-      </section>
-
-      </div>
-    </main>
+  // Temporary compatibility with our older
+  // hardcoded learning activities.
+  const learningContent = localLearningContent.find(
+    (entry) => entry.slug === song.slug
   );
 
-  
+  const annotations = learningContent?.annotations ?? [];
+  const vocabulary = learningContent?.vocabulary ?? [];
+  const grammarTopics = learningContent?.grammarTopics ?? [];
+  const listeningPrompts =
+    learningContent?.listeningPrompts ?? [];
+  const quiz = learningContent?.quiz ?? [];
+
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-10">
+      {/* Navigation */}
+      <Link
+        href="/"
+        className="text-sm text-teal-700 hover:underline"
+      >
+        ← Back to song library
+      </Link>
+
+      {/* Database-backed song metadata */}
+      <header className="mt-8 mb-10">
+        <p className="text-sm font-medium text-teal-700">
+          {song.artist.name}
+        </p>
+
+        <h1 className="mt-2 text-4xl font-bold">
+          {song.title}
+        </h1>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span className="rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-800">
+            {song.practiceLevel} practice
+          </span>
+
+          <span className="text-sm text-gray-500">
+            {song.lyrics
+              ? "Synchronized lyrics saved"
+              : "Lyrics not added yet"}
+          </span>
+        </div>
+
+        {song.difficultyNote && (
+          <p className="mt-4 max-w-2xl text-gray-600">
+            {song.difficultyNote}
+          </p>
+        )}
+      </header>
+
+      {/* Existing YouTube + lyrics + Bedrock experience */}
+      <SongPlayer
+        key={song.slug}
+        songSlug={song.slug}
+        videoId={song.youtubeId}
+        annotations={annotations}
+      />
+
+      {/* Learning content */}
+      {learningContent ? (
+        <div className="mt-12 space-y-12">
+          {grammarTopics.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold">
+                Grammar topics
+              </h2>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {grammarTopics.map((topic) => (
+                  <span
+                    key={topic}
+                    className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700"
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {vocabulary.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold">
+                Vocabulary
+              </h2>
+
+              <p className="mt-2 text-gray-600">
+                Review useful German words from
+                this song.
+              </p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {vocabulary.map((word) => (
+                  <div
+                    key={word.german}
+                    id={`vocab-${word.german}`}
+                  >
+                    <VocabularyCard word={word} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {listeningPrompts.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold">
+                Listening challenges
+              </h2>
+
+              <ul className="mt-4 list-disc space-y-2 pl-6 text-gray-700">
+                {listeningPrompts.map((prompt, index) => (
+                  <li key={index}>{prompt}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {quiz.length > 0 && (
+            <section>
+              <h2 className="mb-5 text-2xl font-semibold">
+                Practice quiz
+              </h2>
+
+              <SongQuiz questions={quiz} />
+            </section>
+          )}
+        </div>
+      ) : (
+        <section className="mt-12 rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-xl font-semibold">
+            Learning activities coming soon
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-gray-600">
+            You can already watch this song, import
+            synchronized lyrics, and use the AI
+            vocabulary tutor.
+
+            Dedicated vocabulary, grammar, and
+            quizzes will be added later.
+          </p>
+        </section>
+      )}
+    </main>
+  );
 }

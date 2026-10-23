@@ -1,60 +1,137 @@
 
 import Link from "next/link";
-import { songs } from "@/data/songs";
+import { Suspense } from "react";
+import prisma from "@/lib/prisma";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#F7F7F4] px-6 py-12 text-[#171717]">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-10">
-          <p className="mb-2 text-sm font-semibold text-teal-700">
-            LEARN GERMAN THROUGH MUSIC
-          </p>
+    <main className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-10">
+        <p className="text-sm font-medium text-teal-700">
+          WortMeister
+        </p>
 
-          <h1 className="text-4xl font-bold">
-            WortMeister
-          </h1>
+        <h1 className="mt-2 text-4xl font-bold">
+          Learn German through music
+        </h1>
 
-          <p className="mt-3 text-gray-600">
-            Discover German songs, learn vocabulary,
-            and understand the language behind the music.
-          </p>
-        </div>
+        <p className="mt-4 max-w-2xl text-gray-600">
+          Explore Rammstein songs, follow synchronized
+          German lyrics, and learn vocabulary and
+          grammar with your AI tutor.
+        </p>
+      </div>
 
-        <h2 className="mb-4 text-xl font-semibold">
-          Explore songs
+      <Suspense fallback={<SongLibrarySkeleton />}>
+        <SongLibrary />
+      </Suspense>
+    </main>
+  );
+}
+
+function SongLibrarySkeleton() {
+  return (
+    <div
+      role="status"
+      className="rounded-xl border border-gray-200 bg-white p-6 text-gray-500"
+    >
+      Loading songs...
+    </div>
+  );
+}
+
+async function SongLibrary() {
+  const songs = await prisma.song.findMany({
+    where: {
+      artist: {
+        is: {
+          slug: "rammstein",
+        },
+      },
+    },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      practiceLevel: true,
+      difficultyNote: true,
+      artist: {
+        select: {
+          name: true,
+        },
+      },
+      lyrics: {
+        select: {
+          id: true,
+        },
+      },
+    },
+    orderBy: {
+      title: "asc",
+    },
+  });
+
+  if (songs.length === 0) {
+    return (
+      <div className="rounded-xl border p-6">
+        <p className="text-gray-600">
+          No songs have been added yet.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <section>
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-2xl font-semibold">
+          Rammstein Song Library
         </h2>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {songs.map((song) => (
-            <Link
-              key={song.slug}
-              href={`/songs/${song.slug}`}
-              className="rounded-xl border border-gray-200 bg-white p-6 transition hover:border-teal-600 hover:shadow-md"
-            >
-              <div className="mb-4 text-3xl">♫</div>
-
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xl font-semibold">
-                  {song.title}
-                </h3>
-
-                <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-                  {song.practiceLevel}
-                </span>
-              </div>
-
-              <p className="mt-1 text-gray-500">
-                {song.artist}
-              </p>
-
-              <p className="mt-4 text-sm text-gray-600">
-                {song.grammarTopics.join(" · ")}
-              </p>
-            </Link>
-          ))}
-        </div>
+        <span className="text-sm text-gray-500">
+          {songs.length} songs
+        </span>
       </div>
-    </main>
+
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {songs.map((song) => (
+          <Link
+            key={song.id}
+            href={`/songs/${song.slug}`}
+            className="rounded-xl border border-gray-200 bg-white p-6 transition hover:border-teal-500 hover:shadow-md"
+          >
+            <p className="text-sm text-gray-500">
+              {song.artist.name}
+            </p>
+
+            <h3 className="mt-2 text-2xl font-semibold">
+              {song.title}
+            </h3>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-teal-50 px-3 py-1 text-xs text-teal-800">
+                {song.practiceLevel} practice
+              </span>
+
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+                {song.lyrics
+                  ? "Lyrics ready"
+                  : "Lyrics not added"}
+              </span>
+            </div>
+
+            {song.difficultyNote && (
+              <p className="mt-4 text-sm leading-6 text-gray-600">
+                {song.difficultyNote}
+              </p>
+            )}
+
+            <p className="mt-5 text-sm font-medium text-teal-700">
+              Explore song →
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

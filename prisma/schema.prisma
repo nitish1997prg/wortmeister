@@ -41,3 +41,21 @@ model SongLyrics {
 
   song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
 }
+
+model VocabularyExplanation {
+  id String @id @default(cuid())
+
+  cacheKey String @unique @db.VarChar(64)
+
+  word    String @db.VarChar(100)
+  context String @db.Text
+  level   String @db.VarChar(5)
+
+  modelId       String
+  promptVersion Int    @default(1)
+
+  explanation Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

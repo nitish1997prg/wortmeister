@@ -4,6 +4,9 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
+import { createHash } from "node:crypto";
+import prisma from "@/lib/prisma";
+
 import { z } from "zod";
 
 // Input validation
@@ -108,6 +111,7 @@ OUTPUT:
 - Do not output JSON or Markdown as a text response.
 `;
 
+const PROMPT_VERSION = 1;
 
 export async function POST(request: Request) {
   // This is a local prototype endpoint.
@@ -135,15 +139,90 @@ export async function POST(request: Request) {
 
   const { word, context, level } = validated.data;
 
+  
+  // Use exactly the same model ID for the cache
+  // and the actual Bedrock invocation.
+  const modelId =
+    process.env.BEDROCK_MODEL_ID ??
+    "apac.amazon.nova-lite-v1:0";
+
+  const cacheKey = createHash("sha256")
+    .update(
+      JSON.stringify({
+        word: word.normalize("NFC"),
+        context: context
+          .normalize("NFC")
+          .replace(/\s+/g, " "),
+        level,
+        modelId,
+        promptVersion: PROMPT_VERSION,
+      })
+    )
+    .digest("hex");
+
+
   try {
+
+     
+      // ======================================
+      // 1. LOOK FOR A CACHED EXPLANATION
+      // ======================================
+
+      try {
+        const cached = await prisma.vocabularyExplanation.findUnique({
+          where: {
+            cacheKey,
+          },
+          select: {
+            explanation: true,
+          },
+        });
+
+        if (cached) {
+          // Validate persisted JSON before returning it.
+          const parsed = ExplanationSchema.safeParse(
+            cached.explanation
+          );
+
+          if (parsed.success) {
+            console.log("Vocabulary cache HIT:", word);
+
+            return Response.json(
+              {
+                explanation: parsed.data,
+                source: "database",
+                usage: {
+                  inputTokens: 0,
+                  outputTokens: 0,
+                },
+              },
+              {
+                headers: {
+                  "Cache-Control": "no-store",
+                },
+              }
+            );
+          }
+
+          console.warn(
+            "Cached explanation failed validation:",
+            word
+          );
+        } else {
+          console.log("Vocabulary cache MISS:", word);
+        }
+      } catch (error) {
+        // If Neon is temporarily unavailable,
+        // we can still provide the AI explanation.
+        console.error("Vocabulary cache lookup failed:", error);
+      }
+
+      // Execution continues to Bedrock on a cache miss.
+
     
       const command = new ConverseCommand({
-        modelId:
-          process.env.BEDROCK_MODEL_ID ??
-          "apac.amazon.nova-lite-v1:0",
-
+        modelId: modelId,
         system: [{ text: SYSTEM_PROMPT }],
-
         messages: [
           {
             role: "user",
@@ -245,10 +324,46 @@ export async function POST(request: Request) {
       toolUse.input
     );
 
+    
+    // ======================================
+    // 2. SAVE THE VALIDATED AI EXPLANATION
+    // ======================================
 
+    try {
+      await prisma.vocabularyExplanation.upsert({
+        where: {
+          cacheKey,
+        },
+
+        create: {
+          cacheKey,
+          word,
+          context,
+          level,
+          modelId,
+          promptVersion: PROMPT_VERSION,
+          explanation,
+        },
+
+        update: {
+          explanation,
+        },
+      });
+
+      console.log("Vocabulary explanation cached:", word);
+    } catch (error) {
+      // A failed cache write should not discard
+      // an otherwise successful AI explanation.
+      console.error("Vocabulary cache write failed:", error);
+    }
+
+
+
+    
     return Response.json(
       {
         explanation,
+        source: "bedrock",
         usage: {
           inputTokens: response.usage?.inputTokens ?? 0,
           outputTokens: response.usage?.outputTokens ?? 0,
@@ -260,6 +375,7 @@ export async function POST(request: Request) {
         },
       }
     );
+
   } catch (error) {
     console.error("Bedrock vocabulary error:", error);
 

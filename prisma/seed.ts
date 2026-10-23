@@ -38,6 +38,27 @@ async function main() {
     },
   });
 
+  
+  const sonne = await prisma.song.upsert({
+    where: {
+      slug: "sonne",
+    },
+    update: {},
+    create: {
+      title: "Sonne",
+      slug: "sonne",
+      youtubeId: "StZcUAPRRac",
+      practiceLevel: "A2",
+      difficultyNote:
+        "Suggested A2 listening practice. " +
+        "Contains repetition and useful vocabulary.",
+      artistId: artist.id,
+    },
+  });
+
+  console.log("Seeded song:", sonne.title);
+
+
   console.log("Seeded artist:", artist.name);
   console.log("Seeded song:", song.title);
 }
