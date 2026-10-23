@@ -10,9 +10,11 @@ import type { SongAnnotation } from "@/data/songs";
 import LyricsPanel from "@/components/LyricsPanel";
 
 interface SongPlayerProps {
+  songSlug: string;
   videoId: string;
   annotations: SongAnnotation[];
-  songSlug: string;
+  active?: boolean;
+  onOpenVocabulary?: () => void;
 }
 
 type Player = Parameters<
@@ -33,6 +35,8 @@ export default function SongPlayer({
   songSlug,
   videoId,
   annotations,
+  active = true,
+  onOpenVocabulary,
 }: SongPlayerProps) {
   const playerRef = useRef<Player | null>(null);
 
@@ -120,6 +124,14 @@ async function getVideoTime(): Promise<number | null> {
         window.clearInterval(interval);
       };
     }, [ready, videoId]);
+
+    
+    useEffect(() => {
+      if (!active && ready) {
+        void playerRef.current?.pauseVideo();
+      }
+    }, [active, ready]);
+
 
 
   return (
@@ -323,6 +335,12 @@ async function getVideoTime(): Promise<number | null> {
                           key={word}
                           href={`#vocab-${word}`}
                           className="rounded-full bg-teal-50 px-3 py-2 text-sm text-teal-800 hover:bg-teal-100"
+                          onClick={(event) => {
+                                if (onOpenVocabulary) {
+                                  event.preventDefault();
+                                  onOpenVocabulary();
+                                }
+                              }}
                         >
                           {word} ↗
                         </a>

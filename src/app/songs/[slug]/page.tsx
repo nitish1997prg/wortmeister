@@ -4,16 +4,11 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import prisma from "@/lib/prisma";
-import SavedVocabularySection from "@/components/SavedVocabularySection";
+import SongLearningWorkspace from "@/components/SongLearningWorkspace";
 
 // Temporary learning content.
 // Song metadata now comes from PostgreSQL.
 import { songs as localLearningContent } from "@/data/songs";
-
-import SongPlayer from "@/components/SongPlayer";
-import VocabularyCard from "@/components/VocabularyCard";
-import SongQuiz from "@/components/SongQuiz";
-
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -120,110 +115,18 @@ async function SongContent({ params }: PageProps) {
         )}
       </header>
 
-      {/* Existing YouTube + lyrics + Bedrock experience */}
-      <SongPlayer
+      
+      <SongLearningWorkspace
         key={song.slug}
         songSlug={song.slug}
         videoId={song.youtubeId}
         annotations={annotations}
+        suggestedVocabulary={vocabulary}
+        grammarTopics={grammarTopics}
+        listeningPrompts={listeningPrompts}
+        quiz={quiz}
       />
-
-      
-      {/* Database-backed saved vocabulary */}
-      <div className="mt-12">
-        <SavedVocabularySection
-          key={song.slug}
-          songSlug={song.slug}
-        />
-      </div>
-
-
-      {/* Learning content */}
-      {learningContent ? (
-        <div className="mt-12 space-y-12">
-          {grammarTopics.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold">
-                Grammar topics
-              </h2>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {grammarTopics.map((topic) => (
-                  <span
-                    key={topic}
-                    className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700"
-                  >
-                    {topic}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {vocabulary.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold">
-                Suggested Vocabulary
-              </h2>
-
-              <p className="mt-2 text-gray-600">
-                Review useful German words from
-                this song.
-              </p>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {vocabulary.map((word) => (
-                  <div
-                    key={word.german}
-                    id={`vocab-${word.german}`}
-                  >
-                    <VocabularyCard word={word} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {listeningPrompts.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold">
-                Listening challenges
-              </h2>
-
-              <ul className="mt-4 list-disc space-y-2 pl-6 text-gray-700">
-                {listeningPrompts.map((prompt, index) => (
-                  <li key={index}>{prompt}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {quiz.length > 0 && (
-            <section>
-              <h2 className="mb-5 text-2xl font-semibold">
-                Practice quiz
-              </h2>
-
-              <SongQuiz questions={quiz} />
-            </section>
-          )}
-        </div>
-      ) : (
-        <section className="mt-12 rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-xl font-semibold">
-            Learning activities coming soon
-          </h2>
-
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            You can already watch this song, import
-            synchronized lyrics, and use the AI
-            vocabulary tutor.
-
-            Dedicated vocabulary, grammar, and
-            quizzes will be added later.
-          </p>
-        </section>
-      )}
+  
     </main>
   );
 }
