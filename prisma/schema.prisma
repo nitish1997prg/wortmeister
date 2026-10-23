@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,39 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model Artist {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  songs     Song[]
+  createdAt DateTime @default(now())
+}
+
+model Song {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  youtubeId      String
+  practiceLevel  String   @default("A2")
+  difficultyNote String?
+  artistId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  artist Artist      @relation(fields: [artistId], references: [id])
+  lyrics SongLyrics?
+}
+
+model SongLyrics {
+  id            String   @id @default(cuid())
+  songId        String   @unique
+  lrcContent    String   @db.Text
+  syncedVideoId String
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
 }

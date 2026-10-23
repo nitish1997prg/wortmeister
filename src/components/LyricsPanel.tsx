@@ -20,6 +20,8 @@ interface EditableLine extends LrcLine {
 }
 
 interface LyricsPanelProps {
+  songSlug: string;
+  videoId: string;
   currentTime: number;
   ready: boolean;
   onSeek: (seconds: number) => void;
@@ -42,6 +44,8 @@ function formatTime(time: number): string {
 }
 
 export default function LyricsPanel({
+  songSlug,
+  videoId,
   currentTime,
   ready,
   onSeek,
@@ -71,6 +75,16 @@ export default function LyricsPanel({
     useState<string | null>(null);
 
   const requestRef = useRef<AbortController | null>(null);
+
+  
+  const [loadingSavedLyrics, setLoadingSavedLyrics] =
+    useState(true);
+
+  const [savingLyrics, setSavingLyrics] =
+    useState(false);
+
+  const localChangesRef = useRef(false);
+
 
   const explanationCache = useRef(
     new Map<string, WordExplanation>()
@@ -259,12 +273,14 @@ export default function LyricsPanel({
       setLoadingWord(null);
       setAiError(null);
       setMode("listen");
+      localChangesRef.current = true;
     } catch {
       setMessage("Could not read the file.");
     }
   }
 
   function commit(next: EditableLine[], success: string) {
+    localChangesRef.current = true;
     setHistory((previous) =>
       [...previous, lines].slice(-50)
     );
@@ -376,17 +392,13 @@ export default function LyricsPanel({
     setLines(history[history.length - 1]);
     setHistory((previous) => previous.slice(0, -1));
     setMessage("Last change undone.");
+    localChangesRef.current = true;
   }
 
   function exportLrc() {
     if (lines.length === 0) return;
 
-    const output = [
-      ...metadata,
-      ...lines.map(
-        (line) => `[${formatTime(line.seconds)}]${line.text}`
-      ),
-    ].join("\n") + "\n";
+    const output = serializeCurrentLrc();
 
     const blob = new Blob([output], {
       type: "text/plain;charset=utf-8",
@@ -407,6 +419,162 @@ export default function LyricsPanel({
 
     setMessage("Corrected LRC downloaded.");
   }
+
+  
+  function serializeCurrentLrc(): string {
+    return [
+      ...metadata,
+      ...lines.map(
+        (line) =>
+          `[${formatTime(line.seconds)}]${line.text}`
+      ),
+    ].join("\n") + "\n";
+  }
+
+  
+  async function saveLyricsToDatabase() {
+    if (lines.length === 0 || savingLyrics) return;
+
+    setSavingLyrics(true);
+    setMessage("Saving lyrics...");
+
+    try {
+      const response = await fetch(
+        `/api/songs/${encodeURIComponent(songSlug)}/lyrics`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lrcContent: serializeCurrentLrc(),
+            syncedVideoId: videoId,
+          }),
+        }
+      );
+
+      const result: {
+        saved?: boolean;
+        version?: number;
+        error?: string;
+      } = await response.json();
+
+      if (!response.ok || !result.saved) {
+        throw new Error(
+          result.error ?? "Database save failed."
+        );
+      }
+
+      localChangesRef.current = false;
+
+      setMessage(
+        `Lyrics saved successfully (version ${result.version}).`
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to save lyrics."
+      );
+    } finally {
+      setSavingLyrics(false);
+    }
+  }
+
+
+
+  
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadSavedLyrics() {
+      try {
+        const response = await fetch(
+          `/api/songs/${encodeURIComponent(songSlug)}/lyrics`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Database request failed.");
+        }
+
+        const data: {
+          lrcContent: string | null;
+          syncedVideoId: string | null;
+        } = await response.json();
+
+        if (controller.signal.aborted) return;
+
+        // Never overwrite lyrics imported or edited
+        // while the database request was running.
+        if (localChangesRef.current) return;
+
+        if (!data.lrcContent) {
+          setMessage(
+            "No saved lyrics yet. Import your LRC file once."
+          );
+          return;
+        }
+
+        if (data.syncedVideoId !== videoId) {
+          setMessage(
+            "Saved lyrics belong to a different video. " +
+            "Import lyrics synchronized for this video."
+          );
+          return;
+        }
+
+        const parsed = parseLrc(data.lrcContent);
+
+        if (parsed.length === 0) {
+          setMessage("Saved lyrics contain no valid timestamps.");
+          return;
+        }
+
+        const headers = data.lrcContent
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) =>
+            /^\[(ar|ti|al|by):.*\]$/i.test(line)
+          );
+
+        setLines(
+          parsed.map((line, id) => ({
+            ...line,
+            id,
+          }))
+        );
+
+        setMetadata(headers);
+        setFilename(`${songSlug}-saved.lrc`);
+        setSelectedId(0);
+        setHistory([]);
+        setMode("listen");
+        setFollowPlayback(true);
+
+        setMessage("Lyrics loaded from PostgreSQL.");
+      } catch {
+        if (!controller.signal.aborted) {
+          setMessage(
+            "Unable to load saved lyrics. " +
+            "You can still import an LRC file."
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingSavedLyrics(false);
+        }
+      }
+    }
+
+    void loadSavedLyrics();
+
+    return () => controller.abort();
+  }, [songSlug, videoId]);
+
 
   
     return (
@@ -469,7 +637,16 @@ export default function LyricsPanel({
         )}
 
         {/* First-time import */}
-        {lines.length === 0 ? (
+
+        {
+        loadingSavedLyrics ? (
+          <div
+            role="status"
+            className="rounded-xl border bg-white p-6 text-sm text-gray-600"
+          >
+            Loading saved lyrics...
+          </div>
+        ) :  lines.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6">
             <h3 className="font-semibold">
               Import synchronized lyrics
@@ -761,6 +938,19 @@ export default function LyricsPanel({
               >
                 Export corrected LRC
               </button>
+
+              
+            <button
+              type="button"
+              onClick={() => void saveLyricsToDatabase()}
+              disabled={savingLyrics || lines.length === 0}
+              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {savingLyrics
+                ? "Saving..."
+                : "Save to Database"}
+            </button>
+
             </div>
 
             {/* Editor timeline: text is not clickable vocabulary */}

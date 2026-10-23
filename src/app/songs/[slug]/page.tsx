@@ -70,6 +70,7 @@ async function SongContent({
 
         
         <SongPlayer
+          songSlug={song.slug}
           videoId={song.youtubeId}
           annotations={song.annotations}
         />

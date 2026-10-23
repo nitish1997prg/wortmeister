@@ -12,6 +12,7 @@ import LyricsPanel from "@/components/LyricsPanel";
 interface SongPlayerProps {
   videoId: string;
   annotations: SongAnnotation[];
+  songSlug: string;
 }
 
 type Player = Parameters<
@@ -29,6 +30,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function SongPlayer({
+  songSlug,
   videoId,
   annotations,
 }: SongPlayerProps) {
@@ -185,6 +187,9 @@ async function getVideoTime(): Promise<number | null> {
 
        {/* Synchronized lyrics */}
       <LyricsPanel
+        key={songSlug}
+        songSlug={songSlug}
+        videoId={videoId}
         currentTime={currentTime}
         ready={ready}
         onSeek={playFrom}
