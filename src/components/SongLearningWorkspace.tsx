@@ -87,9 +87,10 @@ export default function SongLearningWorkspace({
 
       {/* Lyrics:
           Keep mounted to preserve playback
-          and unsaved synchronization changes. */}
+          and vocabulary interactions. */}
       <div hidden={activeSection !== "lyrics"}>
         <SongPlayer
+          editorEnabled={false}
           songSlug={songSlug}
           videoId={videoId}
           annotations={annotations}

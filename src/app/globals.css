@@ -343,3 +343,226 @@ body {
     scroll-behavior: auto;
   }
 }
+
+
+
+/* =========================================
+   WORTMEISTER — LISTENING EXPERIENCE
+   ========================================= */
+
+.wm-listening-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* Shared panel appearance */
+
+.wm-player-panel,
+.wm-lyrics-panel {
+  min-width: 0;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Panel titles */
+
+.wm-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--wm-border);
+}
+
+.wm-panel-label {
+  color: var(--wm-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wm-panel-body {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+/* Video player */
+
+.wm-video-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #000;
+}
+
+/* Support react-youtube wrappers and iframe */
+
+.wm-video-frame > div,
+.wm-video-frame iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Lyric presentation area */
+
+.wm-lyrics-content {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.wm-listening-hint {
+  color: var(--wm-faint);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Desktop */
+
+@media (min-width: 1024px) {
+  .wm-listening-stage {
+    grid-template-columns:
+      minmax(0, 0.95fr)
+      minmax(0, 1.05fr);
+    gap: 1.5rem;
+  }
+
+  .wm-player-panel {
+    position: sticky;
+    top: 1.25rem;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 639px) {
+  .wm-panel-heading {
+    padding: 0.9rem 1rem;
+  }
+
+  .wm-panel-body,
+  .wm-lyrics-content {
+    padding: 1rem;
+  }
+
+  .wm-listening-stage {
+    gap: 1rem;
+  }
+}
+
+
+/* Compact song header on learning pages */
+
+.wm-song-hero--compact {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.wm-song-hero--compact .wm-page-title {
+  font-size: clamp(2.75rem, 5vw, 4.5rem);
+}
+
+/* Playback lyrics: stable type metrics prevent jumps between active lines. */
+.wm-lyrics-scroll {
+  height: min(520px, 65dvh);
+  min-height: 240px;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+}
+
+.wm-lyric-line {
+  border-left: 3px solid transparent;
+  color: var(--wm-muted);
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.wm-lyric-line[data-state="past"] {
+  color: var(--wm-faint);
+}
+
+.wm-lyric-line[data-state="active"] {
+  color: var(--wm-text);
+  border-left-color: var(--wm-accent);
+  background: rgb(var(--wm-accent-rgb) / 0.18);
+}
+
+.wm-lyric-word {
+  color: inherit;
+  font-weight: 500;
+  text-decoration-color: currentColor;
+}
+
+.wm-lyric-line[data-state="active"] .wm-lyric-word {
+  color: var(--wm-accent-hover);
+}
+
+.wm-lyric-word:hover {
+  color: var(--wm-text);
+  background: rgb(var(--wm-accent-rgb) / 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-lyric-line { transition: none; }
+}
+
+/* Vocabulary discovery stays inline, leaving the lyrics and player uncovered. */
+.wm-word-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--wm-border);
+  border-top: 3px solid var(--wm-accent);
+  border-radius: var(--wm-radius);
+  background: var(--wm-surface-raised);
+  overflow-wrap: anywhere;
+}
+
+.wm-lyric-word {
+  transition: background-color 140ms ease, color 140ms ease;
+  text-decoration-color: rgb(var(--wm-accent-rgb) / 0.55);
+}
+
+.wm-lyric-word[aria-pressed="true"],
+.wm-lyric-word:active {
+  color: var(--wm-text);
+  background: rgb(var(--wm-accent-rgb) / 0.3);
+  text-decoration-style: solid;
+  text-decoration-color: var(--wm-accent-hover);
+}
+
+.wm-lyric-word:focus-visible,
+.wm-lyrics-scroll:focus-visible {
+  outline: 2px solid var(--wm-accent-hover);
+  outline-offset: 3px;
+}
+
+.wm-save-word {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.wm-word-spinner {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.5rem;
+  border: 2px solid var(--wm-border);
+  border-top-color: var(--wm-accent);
+  border-radius: 50%;
+  animation: wm-word-spin 800ms linear infinite;
+}
+
+@keyframes wm-word-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-word-spinner { animation: none; }
+  .wm-lyric-word { transition: none; }
+}

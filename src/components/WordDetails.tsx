@@ -24,7 +24,7 @@ export default function WordDetails({
   return (
     <aside
       aria-label="Vocabulary explanation"
-      className="rounded-xl border border-[var(--wm-accent)] bg-[rgb(var(--wm-accent-rgb)/0.13)] p-5"
+      className="space-y-3"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -32,7 +32,7 @@ export default function WordDetails({
             German vocabulary
           </p>
 
-          <h3 className="mt-2 text-2xl font-bold text-[var(--wm-text)]">
+          <h3 className="mt-2 text-xl font-bold text-[var(--wm-text)]">
             {word.lemma}
           </h3>
 
@@ -47,11 +47,11 @@ export default function WordDetails({
           aria-label="Close vocabulary explanation"
           className="wm-button-secondary rounded-lg border bg-[var(--wm-surface)] px-3 py-2 text-sm"
         >
-          ✕
+          Close
         </button>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <span className="wm-badge">
           {word.partOfSpeech}
         </span>
@@ -61,7 +61,7 @@ export default function WordDetails({
         </span>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-3">
         <h4 className="text-sm font-semibold text-[var(--wm-text)]">
           Grammar explanation
         </h4>
@@ -71,7 +71,7 @@ export default function WordDetails({
         </p>
       </div>
 
-      <div className="mt-5 rounded-lg bg-[var(--wm-surface)] p-4">
+      <div className="mt-3 rounded-lg bg-[var(--wm-surface)] p-4">
         <p className="text-xs font-semibold uppercase text-[var(--wm-muted)]">
           Example sentence
         </p>
@@ -86,22 +86,31 @@ export default function WordDetails({
       </div>
 
 
-    <div className="mt-5 border-t border-[var(--wm-accent)] pt-4">
+      {word.forms.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold">Related forms</h4>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {word.forms.map((form, index) => <span className="wm-badge" key={`${form}-${index}`}>{form}</span>)}
+          </div>
+        </div>
+      )}
+
+    <div className="mt-3 border-t border-[var(--wm-accent)] pt-4">
       <button
         type="button"
         disabled={!canSave || saving}
         onClick={onToggleSave}
-        className={`w-full ${
+        aria-pressed={isSaved}
+        className={`wm-save-word w-full ${
           isSaved
             ? "wm-button-secondary"
             : "wm-button-primary"
         }`}
       >
-        {saving
-          ? "Updating..."
-          : isSaved
-            ? "✓ Saved — Remove Word"
-            : "＋ Save Word"}
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
+          <path d="M6 3h12v18l-6-4-6 4V3Z" />
+        </svg>
+        {saving ? "Updating..." : isSaved ? "Saved - Remove word" : "Save word"}
       </button>
 
       {!canSave && (

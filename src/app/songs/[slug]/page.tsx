@@ -96,7 +96,7 @@ async function SongContent({ params }: PageProps) {
         </Link>
 
         {/* Song hero */}
-        <header className="wm-song-hero space-y-5">
+       <header className="wm-song-hero wm-song-hero--compact space-y-4">
 
           {/* Artist name */}
           <p className="wm-eyebrow">

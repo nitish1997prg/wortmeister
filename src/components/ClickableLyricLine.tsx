@@ -3,12 +3,14 @@
 
 interface ClickableLyricLineProps {
   text: string;
-  onWordSelect: (word: string) => void;
+  onWordSelect: (word: string, tokenIndex: number, trigger: HTMLButtonElement) => void;
+  selectedTokenIndex?: number;
 }
 
 export default function ClickableLyricLine({
   text,
   onWordSelect,
+  selectedTokenIndex,
 }: ClickableLyricLineProps) {
   const tokens =
     text.match(
@@ -29,9 +31,11 @@ export default function ClickableLyricLine({
           <button
             key={index}
             type="button"
-            onClick={() => onWordSelect(token)}
+            onClick={(event) => onWordSelect(token, index, event.currentTarget)}
+            aria-pressed={selectedTokenIndex === index}
+            aria-controls={selectedTokenIndex === index ? "wm-word-explanation" : undefined}
             title={`Explain ${token}`}
-            className="rounded px-0.5 font-medium text-[var(--wm-accent)] underline decoration-[var(--wm-accent)] decoration-dotted underline-offset-4 hover:bg-[rgb(var(--wm-accent-rgb)/0.13)]"
+            className="wm-lyric-word rounded px-0.5 underline decoration-dotted underline-offset-4"
           >
             {token}
           </button>

@@ -8,8 +8,11 @@ import YouTube, {
 
 import type { SongAnnotation } from "@/data/songs";
 import LyricsPanel from "@/components/LyricsPanel";
+import AdminLyricsEditor from "@/components/admin/AdminLyricsEditor";
 
 interface SongPlayerProps {
+  /** Presentation only; does not grant write access. */
+  editorEnabled?: boolean;
   songSlug: string;
   videoId: string;
   annotations: SongAnnotation[];
@@ -32,12 +35,14 @@ function formatTime(seconds: number): string {
 }
 
 export default function SongPlayer({
+  editorEnabled = false,
   songSlug,
   videoId,
   annotations,
   active = true,
   onOpenVocabulary,
 }: SongPlayerProps) {
+  const LyricsContent = editorEnabled ? AdminLyricsEditor : LyricsPanel;
   const playerRef = useRef<Player | null>(null);
 
   const [ready, setReady] = useState(false);
@@ -135,81 +140,96 @@ async function getVideoTime(): Promise<number | null> {
 
 
   return (
-    <section className="grid items-start gap-8 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)]">
-      {/* Left side: video */}
-      <div className="min-w-0 space-y-4 xl:sticky xl:top-6">
-        <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
-          <YouTube
-            videoId={videoId}
-            className="absolute inset-0 h-full w-full"
-            iframeClassName="h-full w-full"
-            opts={{
-              playerVars: {
-                playsinline: 1,
-              },
-            }}
-            onReady={handleReady}
-            onError={() => setReady(false)}
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="wm-listening-stage">
+        {/* Left: music player */}
+        <section className="wm-player-panel" aria-label="Music player">
+          <div className="wm-panel-heading">
+            <span className="wm-panel-label">Now Playing</span>
+            <span className="wm-badge">Listen &amp; Learn</span>
+          </div>
 
-        <a
-          href={`https://www.youtube.com/watch?v=${videoId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block text-sm text-[var(--wm-accent)] underline"
-        >
-          Watch on YouTube
-        </a>
+          <div className="wm-panel-body space-y-4">
+            <div className="wm-video-frame relative">
+              <YouTube
+                videoId={videoId}
+                className="absolute inset-0 h-full w-full"
+                iframeClassName="h-full w-full"
+                opts={{
+                  playerVars: {
+                    playsinline: 1,
+                  },
+                }}
+                onReady={handleReady}
+                onError={() => setReady(false)}
+              />
+            </div>
 
-        {/* Timestamp capture */}
-        <div className="wm-card p-4">
-          <h3 className="font-semibold">
-            Timestamp capture
-          </h3>
+            <a
+              href={`https://www.youtube.com/watch?v=${videoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-sm text-[var(--wm-accent)] underline"
+            >
+              Watch on YouTube
+            </a>
 
-          <p className="mt-2 text-sm text-[var(--wm-muted)]">
-            Capture the current position while
-            listening to build accurate annotations.
-          </p>
+            {/* Retained for the future admin editor. */}
+            {editorEnabled && <div className="wm-card p-4">
+              <h3 className="font-semibold">
+                Timestamp capture
+              </h3>
 
-          <button
-            type="button"
-            disabled={!ready}
-            onClick={captureCurrentTime}
-            className="wm-button-primary mt-4 px-4 py-2 text-sm disabled:opacity-50"
-          >
-            Capture current time
-          </button>
+              <p className="mt-2 text-sm text-[var(--wm-muted)]">
+                Capture the current position while
+                listening to build accurate annotations.
+              </p>
 
-          {capturedTime !== null && (
-            <p role="status" className="mt-3 text-sm">
-              Captured:{" "}
-              <strong>
-                {formatTime(capturedTime)}
-              </strong>
-              {" "}({capturedTime} seconds)
-            </p>
-          )}
-        </div>
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={captureCurrentTime}
+                className="wm-button-primary mt-4 px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Capture current time
+              </button>
+
+              {capturedTime !== null && (
+                <p role="status" className="mt-3 text-sm">
+                  Captured:{" "}
+                  <strong>
+                    {formatTime(capturedTime)}
+                  </strong>
+                  {" "}({capturedTime} seconds)
+                </p>
+              )}
+            </div>}
+          </div>
+        </section>
+
+        {/* Right: synchronized lyrics */}
+        <section className="wm-lyrics-panel" aria-label="Synchronized lyrics">
+          <div className="wm-panel-heading">
+            <span className="wm-panel-label">Lyrics</span>
+            <span className="wm-listening-hint">Select words to learn</span>
+          </div>
+
+          <div className="wm-lyrics-content">
+            <LyricsContent
+              key={songSlug}
+              songSlug={songSlug}
+              videoId={videoId}
+              currentTime={currentTime}
+              ready={ready}
+              onSeek={playFrom}
+              getVideoTime={getVideoTime}
+            />
+          </div>
+        </section>
       </div>
 
-      {/* Right side: lyrics and annotations */}
-      <div className="min-w-0 space-y-6">
-
-       {/* Synchronized lyrics */}
-      <LyricsPanel
-        key={songSlug}
-        songSlug={songSlug}
-        videoId={videoId}
-        currentTime={currentTime}
-        ready={ready}
-        onSeek={playFrom}
-        getVideoTime={getVideoTime}
-      />
-
-      {/* Right side: annotations */}
-      <div className="space-y-4">
+      {/* Supplementary annotations */}
+      {!editorEnabled && <div className="space-y-4">
         <div>
           <h2 className="wm-section-title">
             Explore the song
@@ -266,11 +286,11 @@ async function getVideoTime(): Promise<number | null> {
                   {formatTime(annotation.seconds)}
                 </button>
 
-                <span className="text-xs text-[var(--wm-muted)]">
+                {editorEnabled && <span className="text-xs text-[var(--wm-muted)]">
                   {annotation.timestampVerified
                     ? "Verified timestamp"
                     : "Sample timestamp - verify before publishing"}
-                </span>
+                </span>}
               </div>
 
               {/* Learning objective */}
@@ -363,8 +383,7 @@ async function getVideoTime(): Promise<number | null> {
             </div>
           </details>
         ))}
-      </div>
+      </div>}
     </div>
-    </section>
   );
 }
