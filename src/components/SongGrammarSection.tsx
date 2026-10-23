@@ -98,7 +98,7 @@ export default function SongGrammarSection({
 
   if (error) {
     return (
-      <p role="alert" className="text-red-700">
+      <p role="alert" className="text-[var(--wm-danger)]">
         {error}
       </p>
     );
@@ -107,27 +107,27 @@ export default function SongGrammarSection({
   return (
     <section className="space-y-5">
       <div>
-        <h2 className="text-2xl font-semibold">
+        <h2 className="wm-section-title">
           Grammar
         </h2>
 
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-[var(--wm-muted)]">
           Review grammatical concepts encountered
           in your saved song vocabulary.
         </p>
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-[var(--wm-muted)]">
         {topics.length} grammar topics
       </p>
 
       {topics.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-6">
+        <div className="wm-card border-dashed p-6">
           <p className="font-medium">
             No grammar notes yet
           </p>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Save some German words from the lyrics
             to build your grammar collection.
           </p>
@@ -137,12 +137,12 @@ export default function SongGrammarSection({
           {topics.map(([topic, entries]) => (
             <details
               key={topic}
-              className="rounded-xl border border-gray-200 bg-white p-5"
+              className="wm-card p-5"
             >
               <summary className="cursor-pointer font-semibold">
                 {topic}
 
-                <span className="ml-2 text-xs font-normal text-gray-500">
+                <span className="ml-2 text-xs font-normal text-[var(--wm-muted)]">
                   ({entries.length})
                 </span>
               </summary>
@@ -151,17 +151,17 @@ export default function SongGrammarSection({
                 {entries.map((entry) => (
                   <article
                     key={entry.id}
-                    className="rounded-lg bg-gray-50 p-4"
+                    className="wm-subtle p-4"
                   >
-                    <h3 className="font-semibold text-teal-800">
+                    <h3 className="font-semibold text-[var(--wm-accent)]">
                       {entry.explanation.lemma}
                     </h3>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-[var(--wm-muted)]">
                       {entry.explanation.english}
                     </p>
 
-                    <p className="mt-3 text-sm leading-6 text-gray-700">
+                    <p className="mt-3 text-sm leading-6 text-[var(--wm-text)]">
                       {entry.explanation.grammar}
                     </p>
 
@@ -169,7 +169,7 @@ export default function SongGrammarSection({
                       {entry.explanation.exampleGerman}
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-[var(--wm-muted)]">
                       {entry.explanation.exampleEnglish}
                     </p>
                   </article>
@@ -180,7 +180,7 @@ export default function SongGrammarSection({
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-[var(--wm-muted)]">
         Topics are grouped heuristically from
         saved AI explanations. Review grammatical
         claims before treating them as authoritative.

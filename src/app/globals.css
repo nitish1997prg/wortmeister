@@ -1,26 +1,345 @@
 @import "tailwindcss";
 
+
+/* =========================================
+   WORTMEISTER — DESIGN SYSTEM
+   ========================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* Foundation */
+  --wm-bg: #0d0f12;
+  --wm-surface: #191c20;
+  --wm-surface-raised: #22262b;
+  --wm-surface-soft: #282c31;
+
+  /* Text */
+  --wm-text: #f3f0eb;
+  --wm-muted: #b5b8bf;
+  --wm-faint: #969ba4;
+
+  /* Borders */
+  --wm-border: #373c43;
+
+  /* Default accent */
+  --wm-accent: #d36f58;
+  --wm-accent-hover: #e48772;
+  --wm-accent-rgb: 211 111 88;
+  --wm-glow-rgb: 96 42 34;
+
+  /* Feedback */
+  --wm-danger: #f29b9b;
+  --wm-warning: #e8c577;
+  --wm-warning-surface: #30291c;
+
+  /* Layout */
+  --wm-radius: 14px;
+}
+
+html {
+  background: var(--wm-bg);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  background: var(--wm-bg);
+  color: var(--wm-text);
+}
+
+/* =========================================
+   APPLICATION SHELL
+   ========================================= */
+
+.wm-shell {
+  min-height: 100vh;
+  color: var(--wm-text);
+  background:
+    radial-gradient(
+      ellipse 65rem 36rem at 85% -8%,
+      rgb(var(--wm-glow-rgb) / 0.32),
+      transparent 72%
+    ),
+    var(--wm-bg);
+}
+
+.wm-container {
+  width: min(100% - 2rem, 1200px);
+  margin-inline: auto;
+  padding-block: 2.5rem 6rem;
+}
+
+/* =========================================
+   TYPOGRAPHY
+   ========================================= */
+
+.wm-display {
+  font-family:
+    var(--font-wm-display),
+    "Arial Narrow",
+    sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+  line-height: 0.95;
+}
+
+.wm-page-title {
+  font-size: clamp(3rem, 7vw, 6rem);
+  color: var(--wm-text);
+}
+
+.wm-section-title {
+  color: var(--wm-text);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.wm-eyebrow {
+  color: var(--wm-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.wm-muted {
+  color: var(--wm-muted);
+}
+
+.wm-accent-text {
+  color: var(--wm-accent);
+}
+
+/* =========================================
+   SURFACES
+   ========================================= */
+
+.wm-card {
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius);
+  color: var(--wm-text);
+}
+
+.wm-card-raised {
+  background: var(--wm-surface-raised);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius);
+  color: var(--wm-text);
+}
+
+.wm-subtle {
+  background: var(--wm-surface-soft);
+  color: var(--wm-text);
+  border-radius: 10px;
+}
+
+.wm-song-hero {
+  background:
+    linear-gradient(
+      125deg,
+      rgb(var(--wm-accent-rgb) / 0.12),
+      transparent 60%
+    ),
+    var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: 20px;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+/* =========================================
+   TABS
+   ========================================= */
+
+.wm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius);
+}
+
+.wm-tab {
+  border-radius: 9px;
+  padding: 0.75rem 1.1rem;
+
+  color: var(--wm-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.wm-tab:hover {
+  background: var(--wm-surface-raised);
+  color: var(--wm-text);
+}
+
+.wm-tab[data-active="true"] {
+  background: var(--wm-accent);
+  color: #111317;
+}
+
+/* =========================================
+   BUTTONS AND BADGES
+   ========================================= */
+
+.wm-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.75rem 1.25rem;
+  border-radius: 9px;
+
+  background: var(--wm-accent);
+  color: #111317;
+
+  font-size: 0.875rem;
+  font-weight: 700;
+
+  transition: background-color 160ms ease;
+}
+
+.wm-button-primary:hover:not(:disabled) {
+  background: var(--wm-accent-hover);
+}
+
+.wm-button-secondary {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--wm-border);
+  border-radius: 9px;
+
+  background: var(--wm-surface-raised);
+  color: var(--wm-text);
+}
+
+.wm-button-secondary:hover:not(:disabled) {
+  border-color: var(--wm-accent);
+}
+
+.wm-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+
+  background: rgb(var(--wm-accent-rgb) / 0.13);
+  color: var(--wm-accent);
+
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* =========================================
+   FORM CONTROLS
+   ========================================= */
+
+.wm-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+
+  background: var(--wm-surface-raised);
+  color: var(--wm-text);
+  border: 1px solid var(--wm-border);
+  border-radius: 9px;
+}
+
+.wm-input::placeholder {
+  color: var(--wm-faint);
+}
+
+.wm-input:focus {
+  border-color: var(--wm-accent);
+  outline: none;
+}
+
+.wm-shell :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--wm-accent-hover);
+  outline-offset: 3px;
+}
+
+.wm-shell button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-tab,
+  .wm-button-primary {
+    transition: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Shared interaction details */
+@layer base {
+  .wm-shell :where(*, ::before, ::after) {
+    border-color: var(--wm-border);
+  }
+}
+
+.wm-library-card {
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.wm-library-card:hover {
+  border-color: var(--wm-accent);
+  background: var(--wm-surface-raised);
+}
+
+.wm-shell :is(button, summary, input[type="file"]::file-selector-button) {
+  cursor: pointer;
+}
+
+.wm-shell input[type="checkbox"] {
+  accent-color: var(--wm-accent);
+}
+
+.wm-shell input[type="file"] {
+  max-width: 100%;
+  color: var(--wm-muted);
+}
+
+.wm-shell input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--wm-border);
+  border-radius: 9px;
+  background: var(--wm-surface-raised);
+  color: var(--wm-text);
+}
+
+.wm-shell input[type="file"]::file-selector-button:hover {
+  border-color: var(--wm-accent);
+}
+
+.wm-shell ::selection {
+  background: rgb(var(--wm-accent-rgb) / 0.3);
+  color: var(--wm-text);
+}
+
+.wm-shell .overflow-y-auto {
+  scrollbar-color: var(--wm-border) var(--wm-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-shell *, .wm-shell *::before, .wm-shell *::after {
+    transition: none;
+    scroll-behavior: auto;
+  }
 }

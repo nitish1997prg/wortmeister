@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 
 import prisma from "@/lib/prisma";
 import SongLearningWorkspace from "@/components/SongLearningWorkspace";
+import { getSongThemeStyles } from "@/lib/songThemes";
 
 // Temporary learning content.
 // Song metadata now comes from PostgreSQL.
 import { songs as localLearningContent } from "@/data/songs";
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -23,11 +25,13 @@ export default function SongPage({ params }: PageProps) {
 
 function SongLoading() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <p role="status" className="text-gray-500">
-        Loading song...
-      </p>
-    </main>
+    <div className="wm-shell">
+      <main className="wm-container">
+        <p role="status" className="wm-muted">
+          Loading song...
+        </p>
+      </main>
+    </div>
   );
 }
 
@@ -77,56 +81,73 @@ async function SongContent({ params }: PageProps) {
   const quiz = learningContent?.quiz ?? [];
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      {/* Navigation */}
-      <Link
-        href="/"
-        className="text-sm text-teal-700 hover:underline"
-      >
-        ← Back to song library
-      </Link>
+    <div
+      className="wm-shell"
+      style={getSongThemeStyles(song.slug)}
+    >
+      <main className="wm-container space-y-8">
 
-      {/* Database-backed song metadata */}
-      <header className="mt-8 mb-10">
-        <p className="text-sm font-medium text-teal-700">
-          {song.artist.name}
-        </p>
+        {/* Back navigation */}
+        <Link
+          href="/"
+          className="wm-muted inline-block text-sm transition-colors hover:text-[var(--wm-accent)]"
+        >
+          ← Back to song library
+        </Link>
 
-        <h1 className="mt-2 text-4xl font-bold">
-          {song.title}
-        </h1>
+        {/* Song hero */}
+        <header className="wm-song-hero space-y-5">
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-800">
-            {song.practiceLevel} practice
-          </span>
-
-          <span className="text-sm text-gray-500">
-            {song.lyrics
-              ? "Synchronized lyrics saved"
-              : "Lyrics not added yet"}
-          </span>
-        </div>
-
-        {song.difficultyNote && (
-          <p className="mt-4 max-w-2xl text-gray-600">
-            {song.difficultyNote}
+          {/* Artist name */}
+          <p className="wm-eyebrow">
+            {song.artist.name}
           </p>
-        )}
-      </header>
 
-      
-      <SongLearningWorkspace
-        key={song.slug}
-        songSlug={song.slug}
-        videoId={song.youtubeId}
-        annotations={annotations}
-        suggestedVocabulary={vocabulary}
-        grammarTopics={grammarTopics}
-        listeningPrompts={listeningPrompts}
-        quiz={quiz}
-      />
-  
-    </main>
+          {/* Song title */}
+          <h1 className="wm-display wm-page-title">
+            {song.title}
+          </h1>
+
+          {/* Song metadata */}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="wm-badge">
+              {song.practiceLevel} German
+            </span>
+
+            <span className="wm-muted text-sm">
+              {song.lyrics
+                ? "Synchronized lyrics available"
+                : "Lyrics not added yet"}
+            </span>
+          </div>
+
+          {/* Difficulty description */}
+          {song.difficultyNote && (
+            <p className="wm-muted max-w-2xl text-sm leading-7">
+              {song.difficultyNote}
+            </p>
+          )}
+
+          {/* Learning tagline */}
+          <p className="wm-muted text-sm">
+            Listen. Understand. Learn.
+          </p>
+
+        </header>
+
+        {/* Existing song learning dashboard */}
+        <SongLearningWorkspace
+          key={song.slug}
+          songSlug={song.slug}
+          videoId={song.youtubeId}
+          annotations={annotations}
+          suggestedVocabulary={vocabulary}
+          grammarTopics={grammarTopics}
+          listeningPrompts={listeningPrompts}
+          quiz={quiz}
+        />
+
+      </main>
+    </div>
   );
 }

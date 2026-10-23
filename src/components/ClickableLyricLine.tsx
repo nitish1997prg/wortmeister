@@ -31,7 +31,7 @@ export default function ClickableLyricLine({
             type="button"
             onClick={() => onWordSelect(token)}
             title={`Explain ${token}`}
-            className="rounded px-0.5 font-medium text-teal-700 underline decoration-teal-400 decoration-dotted underline-offset-4 hover:bg-teal-100"
+            className="rounded px-0.5 font-medium text-[var(--wm-accent)] underline decoration-[var(--wm-accent)] decoration-dotted underline-offset-4 hover:bg-[rgb(var(--wm-accent-rgb)/0.13)]"
           >
             {token}
           </button>

@@ -76,7 +76,7 @@ export default function LyricsPanel({
 
   const requestRef = useRef<AbortController | null>(null);
 
-  
+
   const [loadingSavedLyrics, setLoadingSavedLyrics] =
     useState(true);
 
@@ -86,7 +86,7 @@ export default function LyricsPanel({
   const localChangesRef = useRef(false);
 
 
-  
+
   interface CachedExplanation {
     explanation: WordExplanation;
     cacheKey: string | null;
@@ -97,7 +97,7 @@ export default function LyricsPanel({
   );
 
 
-  
+
   const [selectedExplanationKey, setSelectedExplanationKey] =
     useState<string | null>(null);
 
@@ -135,7 +135,7 @@ export default function LyricsPanel({
     }
   }
 
-  
+
     useEffect(() => {
       if (mode !== "listen" || !followPlayback) return;
 
@@ -156,7 +156,9 @@ export default function LyricsPanel({
 
       container.scrollTo({
         top: Math.max(0, target),
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
       });
     }, [activeIndex, followPlayback, mode]);
 
@@ -166,8 +168,8 @@ export default function LyricsPanel({
   }, []);
 
 
-  
-  
+
+
   async function explainWord(
     word: string,
     context: string
@@ -496,7 +498,7 @@ export default function LyricsPanel({
     setMessage("Corrected LRC downloaded.");
   }
 
-  
+
   function serializeCurrentLrc(): string {
     return [
       ...metadata,
@@ -507,7 +509,7 @@ export default function LyricsPanel({
     ].join("\n") + "\n";
   }
 
-  
+
   async function saveLyricsToDatabase() {
     if (lines.length === 0 || savingLyrics) return;
 
@@ -557,7 +559,7 @@ export default function LyricsPanel({
     }
   }
 
-  
+
   async function checkSavedStatus(
     cacheKey: string,
     signal: AbortSignal,
@@ -610,7 +612,7 @@ export default function LyricsPanel({
     }
   }
 
-  
+
   async function toggleSavedWord() {
     const cacheKey = selectedExplanationKey;
 
@@ -651,7 +653,7 @@ export default function LyricsPanel({
         );
       }
 
-      
+
       window.dispatchEvent(
         new CustomEvent("wortmeister:vocabulary-changed", {
           detail: {
@@ -686,7 +688,7 @@ export default function LyricsPanel({
   }
 
 
-  
+
   useEffect(() => {
     function handleVocabularyChange(event: Event) {
       const customEvent = event as CustomEvent<{
@@ -724,7 +726,7 @@ export default function LyricsPanel({
 
 
 
-  
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -817,17 +819,17 @@ export default function LyricsPanel({
   }, [songSlug, videoId]);
 
 
-  
+
     return (
       <section className="min-w-0 space-y-4">
         {/* Workspace header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="wm-section-title">
               German Lyrics
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-[var(--wm-muted)]">
               {mode === "listen"
                 ? "Follow the song and click words to learn German."
                 : "Calibrate timestamps against the video."}
@@ -838,7 +840,7 @@ export default function LyricsPanel({
           <div
             role="group"
             aria-label="Lyrics mode"
-            className="flex rounded-lg bg-gray-100 p-1"
+            className="wm-tabs"
           >
             <button
               type="button"
@@ -847,11 +849,8 @@ export default function LyricsPanel({
                 setMode("listen");
                 setFollowPlayback(true);
               }}
-              className={`rounded-md px-3 py-2 text-sm font-medium ${
-                mode === "listen"
-                  ? "bg-white text-teal-800 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className="wm-tab"
+              data-active={mode === "listen"}
             >
               Listen & Learn
             </button>
@@ -860,11 +859,8 @@ export default function LyricsPanel({
               type="button"
               aria-pressed={mode === "edit"}
               onClick={() => setMode("edit")}
-              className={`rounded-md px-3 py-2 text-sm font-medium ${
-                mode === "edit"
-                  ? "bg-white text-teal-800 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className="wm-tab"
+              data-active={mode === "edit"}
             >
               Edit Timing
             </button>
@@ -872,7 +868,7 @@ export default function LyricsPanel({
         </div>
 
         {message && (
-          <p role="status" className="text-sm text-teal-700">
+          <p role="status" className="text-sm text-[var(--wm-accent)]">
             {message}
           </p>
         )}
@@ -883,17 +879,17 @@ export default function LyricsPanel({
         loadingSavedLyrics ? (
           <div
             role="status"
-            className="rounded-xl border bg-white p-6 text-sm text-gray-600"
+            className="wm-card p-6 text-sm text-[var(--wm-muted)]"
           >
             Loading saved lyrics...
           </div>
         ) :  lines.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6">
+          <div className="wm-card border-dashed p-6">
             <h3 className="font-semibold">
               Import synchronized lyrics
             </h3>
 
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-[var(--wm-muted)]">
               Select your corrected LRC file to start
               following the lyrics.
             </p>
@@ -915,28 +911,28 @@ export default function LyricsPanel({
             {(selectedWord || loadingWord || aiError) && (
               <div className="space-y-3">
                       {loadingWord && (
-                        
-                      <p role="status" className="text-sm text-teal-700">
+
+                      <p role="status" className="text-sm text-[var(--wm-accent)]">
                         Generating AI explanation for &quot;{loadingWord}&quot;...
                       </p>
 
                       )}
 
                 {aiError && (
-                  <p role="alert" className="text-sm text-amber-700">
+                  <p role="alert" className="text-sm text-[var(--wm-warning)]">
                     {aiError}
                   </p>
                 )}
 
-                
+
                 {saveError && (
-                  <p role="alert" className="text-sm text-red-700">
+                  <p role="alert" className="text-sm text-[var(--wm-danger)]">
                     {saveError}
                   </p>
                 )}
 
                 {checkingSaved && (
-                  <p role="status" className="text-xs text-gray-500">
+                  <p role="status" className="text-xs text-[var(--wm-muted)]">
                     Checking saved vocabulary...
                   </p>
                 )}
@@ -974,7 +970,7 @@ export default function LyricsPanel({
                   <button
                     type="button"
                     onClick={() => setAiError(null)}
-                    className="text-sm text-teal-700 underline"
+                    className="text-sm text-[var(--wm-accent)] underline"
                   >
                     Dismiss
                   </button>
@@ -983,13 +979,13 @@ export default function LyricsPanel({
             )}
 
             {/* Lyrics viewer */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="wm-card p-4">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-[var(--wm-text)]">
                   {filename}
                 </p>
 
-                <label className="flex items-center gap-2 text-sm text-gray-600">
+                <label className="flex items-center gap-2 text-sm text-[var(--wm-muted)]">
                   <input
                     type="checkbox"
                     checked={followPlayback}
@@ -1003,7 +999,7 @@ export default function LyricsPanel({
 
               <div
                 ref={scrollRef}
-                className="h-[520px] space-y-2 overflow-y-auto rounded-lg bg-gray-50 p-3"
+                className="h-[520px] space-y-2 overflow-y-auto wm-subtle p-3"
               >
                 {lines.map((line, index) => {
                   const isActive = index === activeIndex;
@@ -1014,8 +1010,8 @@ export default function LyricsPanel({
                       ref={isActive ? activeRef : null}
                       className={`flex items-start gap-3 rounded-lg px-3 py-4 transition-colors ${
                         isActive
-                          ? "bg-teal-100 text-gray-900"
-                          : "text-gray-600"
+                          ? "bg-[rgb(var(--wm-accent-rgb)/0.13)] text-[var(--wm-text)]"
+                          : "text-[var(--wm-muted)]"
                       }`}
                     >
                       {/* Seek without showing editing controls */}
@@ -1024,7 +1020,7 @@ export default function LyricsPanel({
                         disabled={!ready}
                         aria-label={`Play from ${formatTime(line.seconds)}`}
                         onClick={() => onSeek(line.seconds)}
-                        className="mt-1 shrink-0 rounded-md px-2 py-1 text-xs text-teal-700 hover:bg-teal-200 disabled:opacity-40"
+                        className="mt-1 shrink-0 rounded-md px-2 py-1 text-xs text-[var(--wm-accent)] hover:bg-[rgb(var(--wm-accent-rgb)/0.13)] disabled:opacity-40"
                       >
                         ▶
                       </button>
@@ -1044,7 +1040,7 @@ export default function LyricsPanel({
                             }}
                           />
                         ) : (
-                          <span className="text-sm italic text-gray-400">
+                          <span className="text-sm italic text-[var(--wm-muted)]">
                             ♪ Instrumental
                           </span>
                         )}
@@ -1054,7 +1050,7 @@ export default function LyricsPanel({
                 })}
               </div>
 
-              <p className="mt-3 text-xs text-gray-500">
+              <p className="mt-3 text-xs text-[var(--wm-muted)]">
                 Click an underlined word for its meaning
                 and grammar explanation.
               </p>
@@ -1066,12 +1062,12 @@ export default function LyricsPanel({
             ====================================== */
           <div className="space-y-4">
             {/* Import / replace source file */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="wm-card p-4">
               <h3 className="font-semibold">
                 LRC file
               </h3>
 
-              <p className="mt-1 break-all text-sm text-gray-600">
+              <p className="mt-1 break-all text-sm text-[var(--wm-muted)]">
                 Currently loaded: {filename}
               </p>
 
@@ -1085,8 +1081,8 @@ export default function LyricsPanel({
             </div>
 
             {/* Video position */}
-            <div className="rounded-xl bg-gray-100 p-4">
-              <p className="text-xs font-medium text-gray-500">
+            <div className="rounded-xl bg-[var(--wm-surface-raised)] p-4">
+              <p className="text-xs font-medium text-[var(--wm-muted)]">
                 CURRENT VIDEO POSITION
               </p>
 
@@ -1097,9 +1093,9 @@ export default function LyricsPanel({
 
             {/* Selected lyric editing controls */}
             {selectedLine && (
-              <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="space-y-4 rounded-xl border border-[var(--wm-warning)] bg-[var(--wm-warning-surface)] p-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase text-amber-800">
+                  <p className="text-xs font-semibold uppercase text-[var(--wm-warning)]">
                     Selected lyric
                   </p>
 
@@ -1120,7 +1116,7 @@ export default function LyricsPanel({
                         selectedLine.seconds - 0.1
                       )
                     }
-                    className="flex-1 rounded-lg border bg-white p-2 text-sm"
+                    className="wm-button-secondary flex-1 rounded-lg border bg-[var(--wm-surface)] p-2 text-sm"
                   >
                     − 0.1s
                   </button>
@@ -1132,7 +1128,7 @@ export default function LyricsPanel({
                         selectedLine.seconds + 0.1
                       )
                     }
-                    className="flex-1 rounded-lg border bg-white p-2 text-sm"
+                    className="wm-button-secondary flex-1 rounded-lg border bg-[var(--wm-surface)] p-2 text-sm"
                   >
                     + 0.1s
                   </button>
@@ -1142,7 +1138,7 @@ export default function LyricsPanel({
                   type="button"
                   disabled={!ready}
                   onClick={() => void syncToVideo(false)}
-                  className="w-full rounded-lg bg-teal-700 p-3 text-sm text-white disabled:opacity-50"
+                  className="wm-button-primary w-full p-3 text-sm disabled:opacity-50"
                 >
                   Set selected line to video time
                 </button>
@@ -1151,7 +1147,7 @@ export default function LyricsPanel({
                   type="button"
                   disabled={!ready}
                   onClick={() => void syncToVideo(true)}
-                  className="w-full rounded-lg border border-teal-700 bg-white p-3 text-sm text-teal-700 disabled:opacity-50"
+                  className="wm-button-secondary w-full rounded-lg border border-[var(--wm-accent)] bg-[var(--wm-surface)] p-3 text-sm text-[var(--wm-accent)] disabled:opacity-50"
                 >
                   Shift selected line and later lyrics
                 </button>
@@ -1159,12 +1155,12 @@ export default function LyricsPanel({
             )}
 
             {/* Global shift */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="wm-card p-4">
               <h3 className="font-semibold">
                 Shift entire song
               </h3>
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-[var(--wm-muted)]">
                 Positive seconds delay lyrics.
                 Negative seconds move them earlier.
               </p>
@@ -1178,13 +1174,13 @@ export default function LyricsPanel({
                     setGlobalShift(event.target.value)
                   }
                   aria-label="Global shift in seconds"
-                  className="min-w-0 flex-1 rounded-lg border p-2"
+                  className="wm-input flex-1"
                 />
 
                 <button
                   type="button"
                   onClick={applyGlobalShift}
-                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white"
+                  className="wm-button-primary px-4 py-2 text-sm"
                 >
                   Apply
                 </button>
@@ -1197,7 +1193,7 @@ export default function LyricsPanel({
                 type="button"
                 disabled={history.length === 0}
                 onClick={undo}
-                className="text-sm text-teal-700 disabled:opacity-40"
+                className="text-sm text-[var(--wm-accent)] disabled:opacity-40"
               >
                 Undo last change
               </button>
@@ -1205,17 +1201,17 @@ export default function LyricsPanel({
               <button
                 type="button"
                 onClick={exportLrc}
-                className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white"
+                className="wm-button-primary px-4 py-2 text-sm font-medium"
               >
                 Export corrected LRC
               </button>
 
-              
+
             <button
               type="button"
               onClick={() => void saveLyricsToDatabase()}
               disabled={savingLyrics || lines.length === 0}
-              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="wm-button-primary px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               {savingLyrics
                 ? "Saving..."
@@ -1225,7 +1221,7 @@ export default function LyricsPanel({
             </div>
 
             {/* Editor timeline: text is not clickable vocabulary */}
-            <div className="h-[430px] space-y-2 overflow-y-auto rounded-xl bg-gray-50 p-3">
+            <div className="h-[430px] space-y-2 overflow-y-auto rounded-xl bg-[var(--wm-surface-raised)] p-3">
               {lines.map((line) => {
                 const isSelected = line.id === selectedId;
 
@@ -1240,11 +1236,11 @@ export default function LyricsPanel({
                       onClick={() => setSelectedId(line.id)}
                       className={`min-w-0 flex-1 rounded-lg border p-3 text-left text-sm ${
                         isSelected
-                          ? "border-amber-500 bg-amber-50"
-                          : "border-gray-200 bg-white"
+                          ? "border-[var(--wm-warning)] bg-[var(--wm-warning-surface)]"
+                          : "border-[var(--wm-border)] bg-[var(--wm-surface)]"
                       }`}
                     >
-                      <span className="mr-2 font-mono text-xs text-gray-500">
+                      <span className="mr-2 font-mono text-xs text-[var(--wm-muted)]">
                         {formatTime(line.seconds)}
                       </span>
 
@@ -1258,7 +1254,7 @@ export default function LyricsPanel({
                       disabled={!ready}
                       onClick={() => onSeek(line.seconds)}
                       aria-label={`Play from ${formatTime(line.seconds)}`}
-                      className="rounded-lg border bg-white px-3 py-3 text-sm disabled:opacity-40"
+                      className="wm-button-secondary rounded-lg border bg-[var(--wm-surface)] px-3 py-3 text-sm disabled:opacity-40"
                     >
                       ▶
                     </button>
@@ -1267,7 +1263,7 @@ export default function LyricsPanel({
               })}
             </div>
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--wm-muted)]">
               Editing changes remain local until you
               export the corrected LRC file.
             </p>

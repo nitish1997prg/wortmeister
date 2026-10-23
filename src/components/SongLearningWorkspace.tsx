@@ -59,30 +59,31 @@ export default function SongLearningWorkspace({
   return (
     <div className="space-y-8">
       {/* Navigation */}
+
       <nav
         aria-label="Song learning sections"
-        className="flex gap-2 overflow-x-auto rounded-xl border border-gray-200 bg-white p-2"
+        className="wm-tabs"
       >
         {sections.map((section) => (
           <button
             key={section.id}
             type="button"
+            className="wm-tab"
+            data-active={
+              activeSection === section.id
+            }
             aria-pressed={
               activeSection === section.id
             }
             onClick={() =>
               setActiveSection(section.id)
             }
-            className={`shrink-0 rounded-lg px-5 py-3 text-sm font-medium transition ${
-              activeSection === section.id
-                ? "bg-teal-700 text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
           >
             {section.label}
           </button>
         ))}
       </nav>
+
 
       {/* Lyrics:
           Keep mounted to preserve playback
@@ -109,11 +110,11 @@ export default function SongLearningWorkspace({
           {suggestedVocabulary.length > 0 && (
             <section className="space-y-5">
               <div>
-                <h2 className="text-2xl font-semibold">
+                <h2 className="wm-section-title">
                   Suggested Vocabulary
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-[var(--wm-muted)]">
                   Additional words selected for
                   learning this song.
                 </p>
@@ -150,7 +151,7 @@ export default function SongLearningWorkspace({
 
           {grammarTopics.length > 0 && (
             <section>
-              <h2 className="text-xl font-semibold">
+              <h2 className="wm-section-title">
                 Suggested Grammar Topics
               </h2>
 
@@ -158,7 +159,7 @@ export default function SongLearningWorkspace({
                 {grammarTopics.map((topic) => (
                   <span
                     key={topic}
-                    className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700"
+                    className="wm-badge"
                   >
                     {topic}
                   </span>
@@ -174,11 +175,11 @@ export default function SongLearningWorkspace({
         <div className="space-y-12">
           {listeningPrompts.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold">
+              <h2 className="wm-section-title">
                 Listening Challenges
               </h2>
 
-              <ul className="mt-5 list-disc space-y-3 pl-6 text-gray-700">
+              <ul className="mt-5 list-disc space-y-3 pl-6 text-[var(--wm-text)]">
                 {listeningPrompts.map(
                   (prompt, index) => (
                     <li key={index}>{prompt}</li>
@@ -190,7 +191,7 @@ export default function SongLearningWorkspace({
 
           {quiz.length > 0 && (
             <section>
-              <h2 className="mb-5 text-2xl font-semibold">
+              <h2 className="mb-5 wm-section-title">
                 Practice Quiz
               </h2>
 
@@ -200,12 +201,12 @@ export default function SongLearningWorkspace({
 
           {quiz.length === 0 &&
             listeningPrompts.length === 0 && (
-              <div className="rounded-xl border border-dashed p-6">
+              <div className="wm-card border-dashed p-6">
                 <h2 className="font-semibold">
                   Practice activities coming soon
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-[var(--wm-muted)]">
                   This song does not have
                   prepared exercises yet.
                 </p>

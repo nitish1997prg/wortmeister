@@ -243,38 +243,38 @@ export default function SavedVocabularySection({
       {/* Heading */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold">
+          <h2 className="wm-section-title">
             Your Saved Vocabulary
           </h2>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Review German words you&apos;ve saved
             while listening to this song.
           </p>
         </div>
 
-        <span className="rounded-full bg-teal-50 px-3 py-2 text-sm font-medium text-teal-800">
+        <span className="wm-badge">
           {words.length} saved words
         </span>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-[var(--wm-danger)]">
           {error}
         </p>
       )}
 
       {loading ? (
-        <p role="status" className="text-sm text-gray-500">
+        <p role="status" className="text-sm text-[var(--wm-muted)]">
           Loading saved vocabulary...
         </p>
       ) : words.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+        <div className="wm-card border-dashed p-8 text-center">
           <h3 className="font-semibold">
             No saved vocabulary yet
           </h3>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Click a German word in the lyrics,
             read its explanation, and select
             Save Word to add it here.
@@ -283,7 +283,7 @@ export default function SavedVocabularySection({
       ) : (
         <>
           {/* Search and category filter */}
-          <div className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:grid-cols-[minmax(0,1fr)_200px]">
+          <div className="grid gap-3 wm-card p-4 sm:grid-cols-[minmax(0,1fr)_200px]">
             <input
               type="search"
               value={search}
@@ -292,7 +292,7 @@ export default function SavedVocabularySection({
               }
               placeholder="Search vocabulary..."
               aria-label="Search saved vocabulary"
-              className="min-w-0 rounded-lg border border-gray-300 px-4 py-3 text-sm"
+              className="wm-input text-sm"
             />
 
             <select
@@ -301,7 +301,7 @@ export default function SavedVocabularySection({
                 setCategory(event.target.value)
               }
               aria-label="Filter by grammatical category"
-              className="rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm"
+              className="wm-input text-sm"
             >
               <option value="All">All categories</option>
 
@@ -313,7 +313,7 @@ export default function SavedVocabularySection({
             </select>
           </div>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--wm-muted)]">
             Showing {filteredWords.length} of{" "}
             {words.length} saved entries
           </p>
@@ -327,7 +327,7 @@ export default function SavedVocabularySection({
               return (
                 <article
                   key={word.id}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                  className="overflow-hidden wm-card"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-4 p-5">
                     <div className="min-w-0">
@@ -335,19 +335,19 @@ export default function SavedVocabularySection({
                         {word.explanation.lemma}
                       </h3>
 
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-1 text-sm text-[var(--wm-muted)]">
                         {word.explanation.english}
                       </p>
 
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
+                        <span className="wm-badge">
                           {
                             word.explanation
                               .partOfSpeech
                           }
                         </span>
 
-                        <span className="rounded-full bg-teal-50 px-3 py-1 text-xs text-teal-800">
+                        <span className="wm-badge">
                           {word.explanation.level}
                         </span>
 
@@ -357,7 +357,7 @@ export default function SavedVocabularySection({
                           word.explanation.lemma.toLocaleLowerCase(
                             "de-DE"
                           ) && (
-                          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
+                          <span className="wm-badge">
                             Form: {word.word}
                           </span>
                         )}
@@ -372,7 +372,7 @@ export default function SavedVocabularySection({
                           expanded ? null : word.id
                         )
                       }
-                      className="rounded-lg border border-teal-700 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+                      className="wm-button-secondary rounded-lg border border-[var(--wm-accent)] px-4 py-2 text-sm font-medium text-[var(--wm-accent)] hover:bg-[rgb(var(--wm-accent-rgb)/0.13)]"
                     >
                       {expanded
                         ? "Hide explanation"
@@ -381,13 +381,13 @@ export default function SavedVocabularySection({
                   </div>
 
                   {expanded && (
-                    <div className="space-y-4 border-t border-gray-200 p-5">
+                    <div className="space-y-4 border-t border-[var(--wm-border)] p-5">
                       <div>
                         <h4 className="text-sm font-semibold">
                           Original context
                         </h4>
 
-                        <p className="mt-2 text-sm text-gray-600">
+                        <p className="mt-2 text-sm text-[var(--wm-muted)]">
                           {word.context}
                         </p>
                       </div>
@@ -398,7 +398,7 @@ export default function SavedVocabularySection({
                             Related forms
                           </h4>
 
-                          <p className="mt-2 text-sm text-gray-600">
+                          <p className="mt-2 text-sm text-[var(--wm-muted)]">
                             {word.explanation.forms.join(
                               " · "
                             )}
@@ -426,7 +426,7 @@ export default function SavedVocabularySection({
           </div>
 
           {filteredWords.length === 0 && (
-            <p className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600">
+            <p className="rounded-xl bg-[var(--wm-surface-raised)] p-6 text-center text-sm text-[var(--wm-muted)]">
               No words match your search or filter.
             </p>
           )}

@@ -5,27 +5,29 @@ import prisma from "@/lib/prisma";
 
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="mb-10">
-        <p className="text-sm font-medium text-teal-700">
-          WortMeister
-        </p>
+    <div className="wm-shell">
+      <main className="wm-container">
+        <div className="wm-song-hero mb-10">
+          <p className="wm-eyebrow">
+            WortMeister
+          </p>
 
-        <h1 className="mt-2 text-4xl font-bold">
-          Learn German through music
-        </h1>
+          <h1 className="wm-display wm-page-title mt-4 max-w-4xl">
+            Learn German through music
+          </h1>
 
-        <p className="mt-4 max-w-2xl text-gray-600">
-          Explore Rammstein songs, follow synchronized
-          German lyrics, and learn vocabulary and
-          grammar with your AI tutor.
-        </p>
-      </div>
+          <p className="mt-4 max-w-2xl text-[var(--wm-muted)]">
+            Explore Rammstein songs, follow synchronized
+            German lyrics, and learn vocabulary and
+            grammar with your AI tutor.
+          </p>
+        </div>
 
-      <Suspense fallback={<SongLibrarySkeleton />}>
-        <SongLibrary />
-      </Suspense>
-    </main>
+        <Suspense fallback={<SongLibrarySkeleton />}>
+          <SongLibrary />
+        </Suspense>
+      </main>
+    </div>
   );
 }
 
@@ -33,7 +35,7 @@ function SongLibrarySkeleton() {
   return (
     <div
       role="status"
-      className="rounded-xl border border-gray-200 bg-white p-6 text-gray-500"
+      className="wm-card p-6 text-[var(--wm-muted)]"
     >
       Loading songs...
     </div>
@@ -73,8 +75,8 @@ async function SongLibrary() {
 
   if (songs.length === 0) {
     return (
-      <div className="rounded-xl border p-6">
-        <p className="text-gray-600">
+      <div className="wm-card p-6">
+        <p className="text-[var(--wm-muted)]">
           No songs have been added yet.
         </p>
       </div>
@@ -83,12 +85,12 @@ async function SongLibrary() {
 
   return (
     <section>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="wm-section-title">
           Rammstein Song Library
         </h2>
 
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-[var(--wm-muted)]">
           {songs.length} songs
         </span>
       </div>
@@ -98,9 +100,9 @@ async function SongLibrary() {
           <Link
             key={song.id}
             href={`/songs/${song.slug}`}
-            className="rounded-xl border border-gray-200 bg-white p-6 transition hover:border-teal-500 hover:shadow-md"
+            className="wm-card wm-library-card flex flex-col p-6"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--wm-muted)]">
               {song.artist.name}
             </p>
 
@@ -109,11 +111,11 @@ async function SongLibrary() {
             </h3>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-teal-50 px-3 py-1 text-xs text-teal-800">
+              <span className="wm-badge">
                 {song.practiceLevel} practice
               </span>
 
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+              <span className="wm-badge">
                 {song.lyrics
                   ? "Lyrics ready"
                   : "Lyrics not added"}
@@ -121,12 +123,12 @@ async function SongLibrary() {
             </div>
 
             {song.difficultyNote && (
-              <p className="mt-4 text-sm leading-6 text-gray-600">
+              <p className="mt-4 text-sm leading-6 text-[var(--wm-muted)]">
                 {song.difficultyNote}
               </p>
             )}
 
-            <p className="mt-5 text-sm font-medium text-teal-700">
+            <p className="mt-5 text-sm font-medium text-[var(--wm-accent)]">
               Explore song →
             </p>
           </Link>

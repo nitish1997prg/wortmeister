@@ -70,7 +70,7 @@ export default function SongPlayer({
     setCapturedTime(Math.floor(seconds));
   }
 
-  
+
 async function getVideoTime(): Promise<number | null> {
   const player = playerRef.current;
 
@@ -86,7 +86,7 @@ async function getVideoTime(): Promise<number | null> {
 }
 
 
-  
+
     useEffect(() => {
       if (!ready) return;
 
@@ -125,7 +125,7 @@ async function getVideoTime(): Promise<number | null> {
       };
     }, [ready, videoId]);
 
-    
+
     useEffect(() => {
       if (!active && ready) {
         void playerRef.current?.pauseVideo();
@@ -157,18 +157,18 @@ async function getVideoTime(): Promise<number | null> {
           href={`https://www.youtube.com/watch?v=${videoId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block text-sm text-teal-700 underline"
+          className="inline-block text-sm text-[var(--wm-accent)] underline"
         >
           Watch on YouTube
         </a>
 
         {/* Timestamp capture */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="wm-card p-4">
           <h3 className="font-semibold">
             Timestamp capture
           </h3>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Capture the current position while
             listening to build accurate annotations.
           </p>
@@ -177,7 +177,7 @@ async function getVideoTime(): Promise<number | null> {
             type="button"
             disabled={!ready}
             onClick={captureCurrentTime}
-            className="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+            className="wm-button-primary mt-4 px-4 py-2 text-sm disabled:opacity-50"
           >
             Capture current time
           </button>
@@ -211,11 +211,11 @@ async function getVideoTime(): Promise<number | null> {
       {/* Right side: annotations */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-2xl font-semibold">
+          <h2 className="wm-section-title">
             Explore the song
           </h2>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Expand a learning moment to explore
             its vocabulary and grammar.
           </p>
@@ -224,12 +224,12 @@ async function getVideoTime(): Promise<number | null> {
         {annotations.map((annotation) => (
           <details
             key={annotation.id}
-            className="group overflow-hidden rounded-xl border border-gray-200 bg-white"
+            className="group overflow-hidden wm-card"
           >
             <summary className="cursor-pointer p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-teal-700">
+                  <p className="text-xs font-medium text-[var(--wm-accent)]">
                     {annotation.topic}
                   </p>
 
@@ -237,21 +237,21 @@ async function getVideoTime(): Promise<number | null> {
                     {annotation.title}
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-[var(--wm-muted)]">
                     {annotation.explanation}
                   </p>
                 </div>
 
                 <span
                   aria-hidden="true"
-                  className="text-xl text-gray-500"
+                  className="text-xl text-[var(--wm-muted)]"
                 >
                   +
                 </span>
               </div>
             </summary>
 
-            <div className="space-y-5 border-t border-gray-200 p-5">
+            <div className="space-y-5 border-t border-[var(--wm-border)] p-5">
               {/* Video timestamp */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
@@ -260,13 +260,13 @@ async function getVideoTime(): Promise<number | null> {
                   onClick={() =>
                     playFrom(annotation.seconds)
                   }
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+                  className="wm-button-primary px-4 py-2 text-sm disabled:opacity-50"
                 >
                   ▶ Play from{" "}
                   {formatTime(annotation.seconds)}
                 </button>
 
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[var(--wm-muted)]">
                   {annotation.timestampVerified
                     ? "Verified timestamp"
                     : "Sample timestamp - verify before publishing"}
@@ -275,29 +275,29 @@ async function getVideoTime(): Promise<number | null> {
 
               {/* Learning objective */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-800">
+                <h4 className="text-sm font-semibold text-[var(--wm-text)]">
                   Learning objective
                 </h4>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-[var(--wm-muted)]">
                   {annotation.learningObjective}
                 </p>
               </div>
 
               {/* Grammar explanation */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-800">
+                <h4 className="text-sm font-semibold text-[var(--wm-text)]">
                   Grammar breakdown
                 </h4>
 
-                <p className="mt-2 text-sm leading-6 text-gray-700">
+                <p className="mt-2 text-sm leading-6 text-[var(--wm-text)]">
                   {annotation.grammarExplanation}
                 </p>
               </div>
 
               {/* Original examples */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-800">
+                <h4 className="text-sm font-semibold text-[var(--wm-text)]">
                   Example sentences
                 </h4>
 
@@ -306,13 +306,13 @@ async function getVideoTime(): Promise<number | null> {
                     (example, index) => (
                       <div
                         key={index}
-                        className="rounded-lg bg-gray-50 p-3"
+                        className="wm-subtle p-3"
                       >
                         <p className="font-medium">
                           {example.german}
                         </p>
 
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-[var(--wm-muted)]">
                           {example.english}
                         </p>
                       </div>
@@ -324,7 +324,7 @@ async function getVideoTime(): Promise<number | null> {
               {/* Related vocabulary */}
               {annotation.relatedVocabulary.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-800">
+                  <h4 className="text-sm font-semibold text-[var(--wm-text)]">
                     Related vocabulary
                   </h4>
 
@@ -334,7 +334,7 @@ async function getVideoTime(): Promise<number | null> {
                         <a
                           key={word}
                           href={`#vocab-${word}`}
-                          className="rounded-full bg-teal-50 px-3 py-2 text-sm text-teal-800 hover:bg-teal-100"
+                          className="wm-badge"
                           onClick={(event) => {
                                 if (onOpenVocabulary) {
                                   event.preventDefault();
@@ -351,12 +351,12 @@ async function getVideoTime(): Promise<number | null> {
               )}
 
               {/* Listening activity */}
-              <div className="rounded-lg border border-teal-100 bg-teal-50 p-4">
-                <h4 className="font-semibold text-teal-900">
+              <div className="rounded-lg border border-[var(--wm-accent)] bg-[rgb(var(--wm-accent-rgb)/0.13)] p-4">
+                <h4 className="font-semibold text-[var(--wm-accent)]">
                   Listening challenge
                 </h4>
 
-                <p className="mt-2 text-sm text-gray-700">
+                <p className="mt-2 text-sm text-[var(--wm-text)]">
                   {annotation.listeningTask}
                 </p>
               </div>

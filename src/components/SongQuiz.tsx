@@ -54,7 +54,7 @@ export default function SongQuiz({
 
   if (finished) {
     return (
-      <div className="rounded-xl border bg-white p-6 text-center">
+      <div className="wm-card p-6 text-center">
         <h3 className="text-2xl font-bold">
           Quiz complete!
         </h3>
@@ -65,7 +65,7 @@ export default function SongQuiz({
 
         <button
           onClick={retryQuiz}
-          className="mt-6 rounded-lg bg-teal-700 px-6 py-3 text-white hover:bg-teal-800"
+          className="wm-button-primary mt-6 px-6 py-3"
         >
           Retry quiz
         </button>
@@ -77,8 +77,8 @@ export default function SongQuiz({
     selected === currentQuestion.correctOptionIndex;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="mb-5 flex justify-between text-sm text-gray-500">
+    <div className="wm-card p-6">
+      <div className="mb-5 flex justify-between text-sm text-[var(--wm-muted)]">
         <span>
           Question {currentIndex + 1}/{questions.length}
         </span>
@@ -100,8 +100,8 @@ export default function SongQuiz({
             onClick={() => setSelected(index)}
             className={`w-full rounded-lg border p-4 text-left transition ${
               selected === index
-                ? "border-teal-700 bg-teal-50"
-                : "border-gray-200 hover:bg-gray-50"
+                ? "border-[var(--wm-accent)] bg-[rgb(var(--wm-accent-rgb)/0.13)]"
+                : "border-[var(--wm-border)] hover:bg-[var(--wm-surface-raised)]"
             } disabled:cursor-default`}
           >
             {option}
@@ -112,13 +112,13 @@ export default function SongQuiz({
       {submitted && (
         <div
           role="status"
-          className="mt-6 rounded-lg bg-gray-50 p-4"
+          className="mt-6 wm-subtle p-4"
         >
           <p className="font-semibold">
             {isCorrect ? "Correct!" : "Not quite."}
           </p>
 
-          <p className="mt-2 text-sm text-gray-700">
+          <p className="mt-2 text-sm text-[var(--wm-text)]">
             {currentQuestion.explanation}
           </p>
         </div>
@@ -130,7 +130,7 @@ export default function SongQuiz({
             type="button"
             disabled={selected === null}
             onClick={checkAnswer}
-            className="rounded-lg bg-teal-700 px-6 py-3 text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="wm-button-primary px-6 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Check answer
           </button>
@@ -138,7 +138,7 @@ export default function SongQuiz({
           <button
             type="button"
             onClick={nextQuestion}
-            className="rounded-lg bg-teal-700 px-6 py-3 text-white hover:bg-teal-800"
+            className="wm-button-primary px-6 py-3"
           >
             {currentIndex === questions.length - 1
               ? "See results"

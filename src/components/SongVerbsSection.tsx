@@ -43,7 +43,7 @@ export default function SongVerbsSection({
 
   if (error) {
     return (
-      <p role="alert" className="text-red-700">
+      <p role="alert" className="text-[var(--wm-danger)]">
         {error}
       </p>
     );
@@ -52,27 +52,27 @@ export default function SongVerbsSection({
   return (
     <section className="space-y-5">
       <div>
-        <h2 className="text-2xl font-semibold">
+        <h2 className="wm-section-title">
           Verbs
         </h2>
 
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-[var(--wm-muted)]">
           Explore verbs discovered and saved
           while learning this song.
         </p>
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-[var(--wm-muted)]">
         {verbs.length} unique saved verbs
       </p>
 
       {verbs.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-6">
+        <div className="wm-card border-dashed p-6">
           <p className="font-medium">
             No saved verbs yet
           </p>
 
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[var(--wm-muted)]">
             Return to Lyrics and save a verb
             to start building this section.
           </p>
@@ -94,18 +94,18 @@ export default function SongVerbsSection({
             return (
               <details
                 key={lemma}
-                className="rounded-xl border border-gray-200 bg-white p-5"
+                className="wm-card p-5"
               >
                 <summary className="cursor-pointer">
                   <h3 className="inline text-xl font-semibold">
                     {primary.lemma}
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-600">
+                  <p className="mt-2 text-sm text-[var(--wm-muted)]">
                     {primary.english}
                   </p>
 
-                  <p className="mt-2 text-xs text-teal-700">
+                  <p className="mt-2 text-xs text-[var(--wm-accent)]">
                     {entries.length} saved context(s)
                   </p>
                 </summary>
@@ -117,7 +117,7 @@ export default function SongVerbsSection({
                         Related forms
                       </h4>
 
-                      <p className="mt-2 text-sm text-gray-600">
+                      <p className="mt-2 text-sm text-[var(--wm-muted)]">
                         {forms.join(" · ")}
                       </p>
                     </div>
@@ -126,9 +126,9 @@ export default function SongVerbsSection({
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
-                      className="rounded-lg bg-gray-50 p-4"
+                      className="wm-subtle p-4"
                     >
-                      <p className="text-sm font-medium text-teal-800">
+                      <p className="text-sm font-medium text-[var(--wm-accent)]">
                         Encountered: {entry.word}
                       </p>
 
@@ -136,7 +136,7 @@ export default function SongVerbsSection({
                         Grammar explanation
                       </h4>
 
-                      <p className="mt-2 text-sm leading-6 text-gray-700">
+                      <p className="mt-2 text-sm leading-6 text-[var(--wm-text)]">
                         {entry.explanation.grammar}
                       </p>
 
@@ -148,7 +148,7 @@ export default function SongVerbsSection({
                         {entry.explanation.exampleGerman}
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-[var(--wm-muted)]">
                         {entry.explanation.exampleEnglish}
                       </p>
                     </div>
@@ -160,7 +160,7 @@ export default function SongVerbsSection({
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-[var(--wm-muted)]">
         Related forms come from saved AI explanations.
         They are not yet verified conjugation tables.
       </p>
