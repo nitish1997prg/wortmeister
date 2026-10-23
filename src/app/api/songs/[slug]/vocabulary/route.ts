@@ -2,6 +2,9 @@
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
+import { connection } from "next/server";
+import { ExplanationSchema } from "@/lib/vocabularySchema";
+
 type Context = {
   params: Promise<{ slug: string }>;
 };
@@ -48,20 +51,32 @@ async function parseBody(request: Request) {
 }
 
 // Check whether this explanation is saved.
+
 export async function GET(
   request: Request,
   { params }: Context
 ) {
-  if (!developmentOnly()) return forbidden();
+  if (!developmentOnly()) {
+    return forbidden();
+  }
+
+  // Required for reading request information with
+  // Next.js Cache Components enabled.
+  await connection();
 
   const { slug } = await params;
 
-  const url = new URL(request.url);
-  const parsed = CacheKeySchema.safeParse(
-    url.searchParams.get("cacheKey")
-  );
+  const cacheKeyParam = new URL(
+    request.url
+  ).searchParams.get("cacheKey");
 
-  if (!parsed.success) {
+  // Preserve the existing single-word status check.
+  const keyCheck =
+    cacheKeyParam === null
+      ? null
+      : CacheKeySchema.safeParse(cacheKeyParam);
+
+  if (keyCheck && !keyCheck.success) {
     return Response.json(
       { error: "Invalid cache key." },
       { status: 400 }
@@ -78,31 +93,107 @@ export async function GET(
       );
     }
 
-    const record = await prisma.savedVocabulary.findFirst({
-      where: {
-        songId: song.id,
-        explanation: {
-          cacheKey: parsed.data,
+    // =========================================
+    // CASE 1: Check if one explanation is saved
+    // =========================================
+    if (keyCheck?.success) {
+      const record =
+        await prisma.savedVocabulary.findFirst({
+          where: {
+            songId: song.id,
+            explanation: {
+              is: {
+                cacheKey: keyCheck.data,
+              },
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      return Response.json(
+        {
+          saved: record !== null,
         },
-      },
-      select: {
-        id: true,
-      },
+        { headers }
+      );
+    }
+
+    // =========================================
+    // CASE 2: Retrieve all saved words for song
+    // =========================================
+    const records =
+      await prisma.savedVocabulary.findMany({
+        where: {
+          songId: song.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          explanation: {
+            select: {
+              cacheKey: true,
+              word: true,
+              context: true,
+              explanation: true,
+            },
+          },
+        },
+      });
+
+    // Prisma Json values must be checked before
+    // sending them to our React components.
+    const words = records.flatMap((record) => {
+      const parsed = ExplanationSchema.safeParse(
+        record.explanation.explanation
+      );
+
+      if (!parsed.success) {
+        console.warn(
+          "Skipping invalid saved explanation:",
+          record.id
+        );
+        return [];
+      }
+
+      return [
+        {
+          id: record.id,
+          cacheKey: record.explanation.cacheKey,
+          word: record.explanation.word,
+          context: record.explanation.context,
+          explanation: parsed.data,
+          savedAt: record.createdAt.toISOString(),
+        },
+      ];
     });
 
     return Response.json(
-      { saved: record !== null },
+      {
+        words,
+        count: words.length,
+      },
       { headers }
     );
   } catch (error) {
-    console.error("Check saved vocabulary failed:", error);
+    console.error(
+      "Get saved vocabulary failed:",
+      error
+    );
 
     return Response.json(
-      { error: "Unable to check saved vocabulary." },
+      {
+        error: "Unable to retrieve saved vocabulary.",
+      },
       { status: 500 }
     );
   }
 }
+
 
 // Save a cached explanation to a song.
 export async function POST(

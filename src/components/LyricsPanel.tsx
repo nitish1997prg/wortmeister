@@ -651,6 +651,22 @@ export default function LyricsPanel({
         );
       }
 
+      
+      window.dispatchEvent(
+        new CustomEvent("wortmeister:vocabulary-changed", {
+          detail: {
+            songSlug,
+            cacheKey,
+            saved: result.saved,
+          },
+        })
+      );
+
+      if (version === selectionVersionRef.current) {
+        setIsWordSaved(result.saved);
+      }
+
+
       if (version === selectionVersionRef.current) {
         setIsWordSaved(result.saved);
       }
@@ -668,6 +684,41 @@ export default function LyricsPanel({
       }
     }
   }
+
+
+  
+  useEffect(() => {
+    function handleVocabularyChange(event: Event) {
+      const customEvent = event as CustomEvent<{
+        songSlug: string;
+        cacheKey: string;
+        saved: boolean;
+      }>;
+
+      const change = customEvent.detail;
+
+      if (
+        change?.songSlug === songSlug &&
+        change.cacheKey === selectedExplanationKey
+      ) {
+        setIsWordSaved(change.saved);
+        setSavedStatusKnown(true);
+      }
+    }
+
+    window.addEventListener(
+      "wortmeister:vocabulary-changed",
+      handleVocabularyChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        "wortmeister:vocabulary-changed",
+        handleVocabularyChange
+      );
+    };
+  }, [songSlug, selectedExplanationKey]);
+
 
 
 

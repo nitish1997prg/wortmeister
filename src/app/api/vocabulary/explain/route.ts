@@ -6,7 +6,7 @@ import {
 
 import { createHash } from "node:crypto";
 import prisma from "@/lib/prisma";
-
+import { ExplanationSchema } from "@/lib/vocabularySchema";
 import { z } from "zod";
 
 // Input validation
@@ -14,18 +14,6 @@ const RequestSchema = z.object({
   word: z.string().trim().min(1).max(50),
   context: z.string().trim().min(1).max(200),
   level: z.enum(["A1", "A2"]).default("A2"),
-});
-
-// Matches our existing WordExplanation interface.
-const ExplanationSchema = z.object({
-  lemma: z.string().min(1),
-  english: z.string().min(1),
-  level: z.enum(["A1", "A2"]),
-  partOfSpeech: z.string().min(1),
-  forms: z.array(z.string()).max(10),
-  grammar: z.string().min(1),
-  exampleGerman: z.string().min(1),
-  exampleEnglish: z.string().min(1),
 });
 
 const client = new BedrockRuntimeClient({

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import prisma from "@/lib/prisma";
+import SavedVocabularySection from "@/components/SavedVocabularySection";
 
 // Temporary learning content.
 // Song metadata now comes from PostgreSQL.
@@ -127,6 +128,16 @@ async function SongContent({ params }: PageProps) {
         annotations={annotations}
       />
 
+      
+      {/* Database-backed saved vocabulary */}
+      <div className="mt-12">
+        <SavedVocabularySection
+          key={song.slug}
+          songSlug={song.slug}
+        />
+      </div>
+
+
       {/* Learning content */}
       {learningContent ? (
         <div className="mt-12 space-y-12">
@@ -152,7 +163,7 @@ async function SongContent({ params }: PageProps) {
           {vocabulary.length > 0 && (
             <section>
               <h2 className="text-2xl font-semibold">
-                Vocabulary
+                Suggested Vocabulary
               </h2>
 
               <p className="mt-2 text-gray-600">
