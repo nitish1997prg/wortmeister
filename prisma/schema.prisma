@@ -26,8 +26,9 @@ model Song {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  artist Artist      @relation(fields: [artistId], references: [id])
-  lyrics SongLyrics?
+  artist          Artist            @relation(fields: [artistId], references: [id])
+  lyrics          SongLyrics?
+  savedVocabulary SavedVocabulary[]
 }
 
 model SongLyrics {
@@ -54,8 +55,23 @@ model VocabularyExplanation {
   modelId       String
   promptVersion Int    @default(1)
 
-  explanation Json
+  explanation     Json
+  savedVocabulary SavedVocabulary[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SavedVocabulary {
+  id            String   @id @default(cuid())
+  songId        String
+  explanationId String
+  createdAt     DateTime @default(now())
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  explanation VocabularyExplanation @relation(fields: [explanationId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, explanationId])
+  @@index([explanationId])
 }

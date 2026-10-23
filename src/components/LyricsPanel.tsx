@@ -86,9 +86,36 @@ export default function LyricsPanel({
   const localChangesRef = useRef(false);
 
 
+  
+  interface CachedExplanation {
+    explanation: WordExplanation;
+    cacheKey: string | null;
+  }
+
   const explanationCache = useRef(
-    new Map<string, WordExplanation>()
+    new Map<string, CachedExplanation>()
   );
+
+
+  
+  const [selectedExplanationKey, setSelectedExplanationKey] =
+    useState<string | null>(null);
+
+  const [isWordSaved, setIsWordSaved] = useState(false);
+
+  const [savedStatusKnown, setSavedStatusKnown] =
+    useState(false);
+
+  const [checkingSaved, setCheckingSaved] =
+    useState(false);
+
+  const [savingWord, setSavingWord] = useState(false);
+
+  const [saveError, setSaveError] =
+    useState<string | null>(null);
+
+  const selectionVersionRef = useRef(0);
+
 
   const selectedIndex = lines.findIndex(
     (line) => line.id === selectedId
@@ -140,34 +167,55 @@ export default function LyricsPanel({
 
 
   
+  
   async function explainWord(
     word: string,
     context: string
   ) {
-    // Cancel the previous browser request.
+    // Cancel the previous explanation/status request.
     requestRef.current?.abort();
 
-    setAiError(null);
+    const controller = new AbortController();
+    requestRef.current = controller;
 
-    // Display the existing glossary entry immediately
-    // if we have one.
+    const version = ++selectionVersionRef.current;
+
+    // Reset the saved-word UI for the new selection.
+    setAiError(null);
+    setSaveError(null);
+    setSelectedExplanationKey(null);
+    setIsWordSaved(false);
+    setSavedStatusKnown(false);
+    setCheckingSaved(false);
+    setSavingWord(false);
+    setLoadingWord(null);
+
+    // Show our local glossary entry immediately,
+    // if one exists.
     setSelectedWord(lookupGermanWord(word) ?? null);
 
-    const cacheKey = JSON.stringify([
+    const localKey = JSON.stringify([
       word.toLocaleLowerCase("de-DE"),
       context,
     ]);
 
-    const cached = explanationCache.current.get(cacheKey);
+    const cached = explanationCache.current.get(localKey);
 
+    // Reuse the explanation from browser memory.
     if (cached) {
-      setSelectedWord(cached);
-      setLoadingWord(null);
+      setSelectedWord(cached.explanation);
+      setSelectedExplanationKey(cached.cacheKey);
+
+      if (cached.cacheKey) {
+        void checkSavedStatus(
+          cached.cacheKey,
+          controller.signal,
+          version
+        );
+      }
+
       return;
     }
-
-    const controller = new AbortController();
-    requestRef.current = controller;
 
     setLoadingWord(word);
 
@@ -190,6 +238,7 @@ export default function LyricsPanel({
 
       const data: {
         explanation?: WordExplanation;
+        cacheKey?: string | null;
         error?: string;
       } = await response.json();
 
@@ -199,27 +248,54 @@ export default function LyricsPanel({
         );
       }
 
-      if (controller.signal.aborted) return;
+      if (
+        controller.signal.aborted ||
+        version !== selectionVersionRef.current
+      ) {
+        return;
+      }
 
-      explanationCache.current.set(
-        cacheKey,
-        data.explanation
-      );
+      const databaseKey =
+        typeof data.cacheKey === "string" &&
+        /^[a-f0-9]{64}$/.test(data.cacheKey)
+          ? data.cacheKey
+          : null;
+
+      explanationCache.current.set(localKey, {
+        explanation: data.explanation,
+        cacheKey: databaseKey,
+      });
 
       setSelectedWord(data.explanation);
+      setSelectedExplanationKey(databaseKey);
+
+      if (databaseKey) {
+        void checkSavedStatus(
+          databaseKey,
+          controller.signal,
+          version
+        );
+      }
     } catch {
-      if (!controller.signal.aborted) {
+      if (
+        !controller.signal.aborted &&
+        version === selectionVersionRef.current
+      ) {
         setAiError(
           "AI explanation unavailable. " +
           "Showing local vocabulary if available."
         );
       }
     } finally {
-      if (!controller.signal.aborted) {
+      if (
+        !controller.signal.aborted &&
+        version === selectionVersionRef.current
+      ) {
         setLoadingWord(null);
       }
     }
   }
+
 
 
   async function importFile(event: ChangeEvent<HTMLInputElement>) {
@@ -481,6 +557,120 @@ export default function LyricsPanel({
     }
   }
 
+  
+  async function checkSavedStatus(
+    cacheKey: string,
+    signal: AbortSignal,
+    version: number
+  ) {
+    setCheckingSaved(true);
+
+    try {
+      const response = await fetch(
+        `/api/songs/${encodeURIComponent(songSlug)}` +
+          `/vocabulary?cacheKey=${cacheKey}`,
+        {
+          signal,
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Saved status request failed.");
+      }
+
+      const data: { saved: boolean } =
+        await response.json();
+
+      if (
+        signal.aborted ||
+        version !== selectionVersionRef.current
+      ) {
+        return;
+      }
+
+      setIsWordSaved(data.saved);
+      setSavedStatusKnown(true);
+    } catch {
+      if (
+        !signal.aborted &&
+        version === selectionVersionRef.current
+      ) {
+        setSaveError(
+          "Could not check whether this word is saved."
+        );
+      }
+    } finally {
+      if (
+        !signal.aborted &&
+        version === selectionVersionRef.current
+      ) {
+        setCheckingSaved(false);
+      }
+    }
+  }
+
+  
+  async function toggleSavedWord() {
+    const cacheKey = selectedExplanationKey;
+
+    if (
+      !cacheKey ||
+      !savedStatusKnown ||
+      savingWord
+    ) {
+      return;
+    }
+
+    const version = selectionVersionRef.current;
+    const shouldRemove = isWordSaved;
+
+    setSavingWord(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch(
+        `/api/songs/${encodeURIComponent(songSlug)}/vocabulary`,
+        {
+          method: shouldRemove ? "DELETE" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ cacheKey }),
+        }
+      );
+
+      const result: {
+        saved?: boolean;
+        error?: string;
+      } = await response.json();
+
+      if (!response.ok || typeof result.saved !== "boolean") {
+        throw new Error(
+          result.error ?? "Unable to update saved vocabulary."
+        );
+      }
+
+      if (version === selectionVersionRef.current) {
+        setIsWordSaved(result.saved);
+      }
+    } catch (error) {
+      if (version === selectionVersionRef.current) {
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : "Unable to update saved vocabulary."
+        );
+      }
+    } finally {
+      if (version === selectionVersionRef.current) {
+        setSavingWord(false);
+      }
+    }
+  }
+
+
+
 
 
   
@@ -687,17 +877,47 @@ export default function LyricsPanel({
                   </p>
                 )}
 
+                
+                {saveError && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {saveError}
+                  </p>
+                )}
+
+                {checkingSaved && (
+                  <p role="status" className="text-xs text-gray-500">
+                    Checking saved vocabulary...
+                  </p>
+                )}
+
                 {selectedWord && (
                   <WordDetails
                     word={selectedWord}
+                    isSaved={isWordSaved}
+                    canSave={
+                      selectedExplanationKey !== null &&
+                      savedStatusKnown &&
+                      !checkingSaved
+                    }
+                    saving={savingWord}
+                    onToggleSave={() => {
+                      void toggleSavedWord();
+                    }}
                     onClose={() => {
                       requestRef.current?.abort();
+                      selectionVersionRef.current += 1;
+
                       setSelectedWord(null);
+                      setSelectedExplanationKey(null);
+                      setIsWordSaved(false);
+                      setSavedStatusKnown(false);
                       setLoadingWord(null);
                       setAiError(null);
+                      setSaveError(null);
                     }}
                   />
                 )}
+
 
                 {!selectedWord && aiError && (
                   <button

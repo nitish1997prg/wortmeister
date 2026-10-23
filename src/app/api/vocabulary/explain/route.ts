@@ -191,6 +191,7 @@ export async function POST(request: Request) {
               {
                 explanation: parsed.data,
                 source: "database",
+                cacheKey,
                 usage: {
                   inputTokens: 0,
                   outputTokens: 0,
@@ -328,6 +329,7 @@ export async function POST(request: Request) {
     // ======================================
     // 2. SAVE THE VALIDATED AI EXPLANATION
     // ======================================
+    let persisted = false;
 
     try {
       await prisma.vocabularyExplanation.upsert({
@@ -350,6 +352,8 @@ export async function POST(request: Request) {
         },
       });
 
+      persisted = true;
+
       console.log("Vocabulary explanation cached:", word);
     } catch (error) {
       // A failed cache write should not discard
@@ -364,6 +368,7 @@ export async function POST(request: Request) {
       {
         explanation,
         source: "bedrock",
+        cacheKey: persisted ? cacheKey: null,
         usage: {
           inputTokens: response.usage?.inputTokens ?? 0,
           outputTokens: response.usage?.outputTokens ?? 0,

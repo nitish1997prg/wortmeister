@@ -6,11 +6,20 @@ import type { WordExplanation } from "@/data/germanVocabulary";
 interface WordDetailsProps {
   word: WordExplanation;
   onClose: () => void;
+
+  isSaved: boolean;
+  canSave: boolean;
+  saving: boolean;
+  onToggleSave: () => void;
 }
 
 export default function WordDetails({
   word,
   onClose,
+  isSaved,
+  canSave,
+  saving,
+  onToggleSave,
 }: WordDetailsProps) {
   return (
     <aside
@@ -75,6 +84,34 @@ export default function WordDetails({
           {word.exampleEnglish}
         </p>
       </div>
+
+      
+    <div className="mt-5 border-t border-teal-200 pt-4">
+      <button
+        type="button"
+        disabled={!canSave || saving}
+        onClick={onToggleSave}
+        className={`w-full rounded-lg px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
+          isSaved
+            ? "border border-teal-700 bg-white text-teal-700"
+            : "bg-teal-700 text-white hover:bg-teal-800"
+        }`}
+      >
+        {saving
+          ? "Updating..."
+          : isSaved
+            ? "✓ Saved — Remove Word"
+            : "＋ Save Word"}
+      </button>
+
+      {!canSave && (
+        <p className="mt-2 text-center text-xs text-gray-500">
+          Saving is available once the AI explanation
+          and its saved status are ready.
+        </p>
+      )}
+    </div>
+
     </aside>
   );
 }
